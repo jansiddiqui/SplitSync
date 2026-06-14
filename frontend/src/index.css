@@ -1,0 +1,647 @@
+@import "tailwindcss";
+
+:root {
+  /* Aurora Mint Brand Palette (Dark Mode Default) */
+  --bg-solid: #070B0F;
+  --bg-gradient: radial-gradient(circle at 50% 0%, rgba(61, 255, 211, 0.08) 0%, transparent 65%);
+  --color-primary-main: #3DFFD3; /* Aurora Mint */
+  --color-primary-light: #7FFFF5; /* Glow Aqua */
+  --color-primary-dark: #00D9FF; /* Neo Cyan */
+  --color-primary-glow: rgba(61, 255, 211, 0.12);
+  
+  --color-accent-main: #00D9FF; /* Neo Cyan */
+  --color-accent-light: #7FFFF5;
+  --color-accent-dark: #3DFFD3;
+  --color-accent-glow: rgba(0, 217, 255, 0.12);
+
+  --color-glow-blue-raw: rgba(0, 217, 255, 0.14);
+  --color-glow-green-raw: rgba(61, 255, 211, 0.14);
+  --color-glow-purple-raw: rgba(157, 140, 255, 0.14);
+
+  --color-cyber-text-glow: rgba(61, 255, 211, 0.3);
+
+  --color-obsidian: #0D131B; /* Secondary Bg */
+  --color-obsidian-card-bg: rgba(18, 26, 36, 0.65); /* Surface Card */
+  --color-obsidian-card-elevated: #182332; /* Elevated Card */
+  --color-obsidian-card-border: rgba(255, 255, 255, 0.08);
+
+  /* Slate overrides for Dark Mode standard contrast */
+  --color-slate-override-50: #f8fafc;
+  --color-slate-override-100: #f1f5f9;
+  --color-slate-override-200: #e2e8f0;
+  --color-slate-override-300: #cbd5e1;
+  --color-slate-override-350: #cbd5e1;
+  --color-slate-override-400: #94a3b8;
+  --color-slate-override-450: #94a3b8;
+  --color-slate-override-500: #64748b;
+  --color-slate-override-550: #64748b;
+  --color-slate-override-600: #475569;
+  --color-slate-override-700: #334155;
+  --color-slate-override-800: #1e293b;
+  --color-slate-override-900: #0f172a;
+  --color-slate-override-950: #020617;
+
+  --input-bg: rgba(2, 4, 10, 0.7);
+  --input-border: rgba(255, 255, 255, 0.07);
+  --input-text: #f1f5f9;
+
+  /* Overrides for Emerald (Aurora Mint) */
+  --color-emerald-override-50: #e6fffa;
+  --color-emerald-override-100: #b3fff0;
+  --color-emerald-override-200: #80ffe0;
+  --color-emerald-override-300: #4dffd3;
+  --color-emerald-override-400: #3dffd3; /* Main Aurora Mint */
+  --color-emerald-override-500: #00e6b3;
+  --color-emerald-override-600: #00b38c;
+  --color-emerald-override-700: #008066;
+  --color-emerald-override-800: #004d3d;
+  --color-emerald-override-900: #001a15;
+  --color-emerald-override-950: #000a08;
+
+  /* Overrides for Red (Coral Alert) */
+  --color-red-override-50: #fff5f5;
+  --color-red-override-100: #ffe3e0;
+  --color-red-override-200: #ffc4bf;
+  --color-red-override-300: #ffa299;
+  --color-red-override-400: #ff7a70; /* Main Coral Alert */
+  --color-red-override-500: #ff5345;
+  --color-red-override-600: #e6392b;
+  --color-red-override-700: #b32217;
+  --color-red-override-800: #80140c;
+  --color-red-override-900: #4d0703;
+  --color-red-override-950: #260200;
+
+  /* Overrides for Blue (Neo Cyan) */
+  --color-blue-override-50: #f0fdff;
+  --color-blue-override-100: #d6faff;
+  --color-blue-override-200: #adf4ff;
+  --color-blue-override-300: #70eaff;
+  --color-blue-override-400: #29dbff;
+  --color-blue-override-500: #00d9ff; /* Main Neo Cyan */
+  --color-blue-override-600: #00b8db;
+  --color-blue-override-700: #008fb5;
+  --color-blue-override-800: #00678a;
+  --color-blue-override-900: #00405c;
+  --color-blue-override-950: #002133;
+
+  /* Overrides for Indigo/Violet */
+  --color-indigo-override-50: #f5f3ff;
+  --color-indigo-override-100: #ede9fe;
+  --color-indigo-override-200: #ddd6fe;
+  --color-indigo-override-300: #c4b5fd;
+  --color-indigo-override-400: #818cf8;
+  --color-indigo-override-500: #6366f1;
+  --color-indigo-override-600: #4f46e5;
+  --color-indigo-override-700: #4338ca;
+  --color-indigo-override-800: #3730a3;
+  --color-indigo-override-900: #1e1b4b;
+  --color-indigo-override-950: #0f172a;
+
+  /* Overrides for Purple (Lavender) */
+  --color-purple-override-400: #b3a5ff;
+  --color-purple-override-500: #9d8cff; /* Electric Lavender */
+  --color-purple-override-600: #806eff;
+
+  /* Overrides for Fuchsia (Aurora Mint/Neo Cyan accent) */
+  --color-fuchsia-override-400: #7ffff5;
+  --color-fuchsia-override-500: #3dffd3;
+  --color-fuchsia-override-600: #00d9ff;
+}
+
+body.theme-light {
+  /* Premium Light Mode */
+  --bg-solid: #f8fafc;
+  --bg-gradient: radial-gradient(circle at 50% 0%, rgba(79, 70, 229, 0.08) 0%, transparent 60%);
+  --color-primary-main: #0d9488; /* Premium Teal/Mint in Light Mode */
+  --color-primary-light: #14b8a6;
+  --color-primary-dark: #0f766e;
+  --color-primary-glow: rgba(13, 148, 136, 0.08);
+
+  --color-accent-main: #4f46e5; /* Indigo Accent */
+  --color-accent-light: #6366f1;
+  --color-accent-dark: #3730a3;
+  --color-accent-glow: rgba(79, 70, 229, 0.08);
+
+  --color-glow-blue-raw: rgba(79, 70, 229, 0.08);
+  --color-glow-green-raw: rgba(13, 148, 136, 0.08);
+  --color-glow-purple-raw: rgba(167, 139, 250, 0.08);
+
+  --color-cyber-text-glow: rgba(13, 148, 136, 0.15);
+
+  --color-obsidian: #ffffff;
+  --color-obsidian-card-bg: rgba(255, 255, 255, 0.85);
+  --color-obsidian-card-elevated: #f1f5f9;
+  --color-obsidian-card-border: rgba(15, 23, 42, 0.08);
+
+  /* Inverted slate colors for Light Mode contrast */
+  --color-slate-override-50: #0f172a;
+  --color-slate-override-100: #0f172a;
+  --color-slate-override-200: #1e293b;
+  --color-slate-override-300: #334155;
+  --color-slate-override-350: #475569;
+  --color-slate-override-400: #475569;
+  --color-slate-override-450: #64748b;
+  --color-slate-override-500: #64748b;
+  --color-slate-override-550: #94a3b8;
+  --color-slate-override-600: #cbd5e1;
+  --color-slate-override-700: #e2e8f0;
+  --color-slate-override-800: #f1f5f9;
+  --color-slate-override-900: #f8fafc;
+  --color-slate-override-950: #ffffff;
+
+  --input-bg: rgba(255, 255, 255, 0.9);
+  --input-border: rgba(0, 0, 0, 0.1);
+  --input-text: #0f172a;
+
+  --color-emerald-override-50: #f0fdf4;
+  --color-emerald-override-100: #dcfce7;
+  --color-emerald-override-200: #bbf7d0;
+  --color-emerald-override-300: #86efac;
+  --color-emerald-override-400: #34d399;
+  --color-emerald-override-500: #10b981;
+  --color-emerald-override-600: #059669;
+  --color-emerald-override-700: #047857;
+
+  --color-red-override-50: #fef2f2;
+  --color-red-override-100: #fee2e2;
+  --color-red-override-200: #fecaca;
+  --color-red-override-300: #fca5a5;
+  --color-red-override-400: #f87171;
+  --color-red-override-500: #ef4444;
+  --color-red-override-600: #dc2626;
+  --color-red-override-700: #b91c1c;
+
+  --color-blue-override-50: #eff6ff;
+  --color-blue-override-100: #dbeafe;
+  --color-blue-override-200: #bfdbfe;
+  --color-blue-override-300: #93c5fd;
+  --color-blue-override-400: #60a5fa;
+  --color-blue-override-500: #3b82f6;
+  --color-blue-override-600: #2563eb;
+  --color-blue-override-700: #1d4ed8;
+
+  --color-purple-override-400: #c084fc;
+  --color-purple-override-500: #a855f7;
+  --color-purple-override-600: #9333ea;
+
+  --color-fuchsia-override-400: #34d399;
+  --color-fuchsia-override-500: #0d9488;
+  --color-fuchsia-override-600: #0f766e;
+
+  /* Opacity utility overrides for light mode contrast */
+  .border-white\/5 {
+    border-color: rgba(15, 23, 42, 0.08) !important;
+  }
+  .border-white\/8 {
+    border-color: rgba(15, 23, 42, 0.1) !important;
+  }
+  .border-white\/10 {
+    border-color: rgba(15, 23, 42, 0.12) !important;
+  }
+  .border-white\/15 {
+    border-color: rgba(15, 23, 42, 0.15) !important;
+  }
+  .border-white\/20 {
+    border-color: rgba(15, 23, 42, 0.2) !important;
+  }
+  .bg-white\/3 {
+    background-color: rgba(15, 23, 42, 0.03) !important;
+  }
+  .bg-white\/4 {
+    background-color: rgba(15, 23, 42, 0.04) !important;
+  }
+  .bg-white\/5 {
+    background-color: rgba(15, 23, 42, 0.05) !important;
+  }
+  .bg-white\/10 {
+    background-color: rgba(15, 23, 42, 0.08) !important;
+  }
+  .hover\:bg-white\/5:hover {
+    background-color: rgba(15, 23, 42, 0.04) !important;
+  }
+  .hover\:bg-white\/10:hover {
+    background-color: rgba(15, 23, 42, 0.08) !important;
+  }
+  .hover\:border-white\/10:hover {
+    border-color: rgba(15, 23, 42, 0.15) !important;
+  }
+  .hover\:border-white\/15:hover {
+    border-color: rgba(15, 23, 42, 0.2) !important;
+  }
+  
+  /* Additional text overrides for custom slate text classes */
+  .text-slate-350 {
+    color: var(--color-slate-override-350) !important;
+  }
+  .text-slate-450 {
+    color: var(--color-slate-override-450) !important;
+  }
+  .text-slate-550 {
+    color: var(--color-slate-override-550) !important;
+  }
+}
+
+@theme {
+  --color-primary: var(--color-primary-main);
+  --color-accent: var(--color-accent-main);
+  
+  /* Custom Obsidian SaaS Palette */
+  --color-obsidian: var(--color-obsidian, #0D131B);
+  --color-obsidian-card: var(--color-obsidian-card-bg);
+  --color-obsidian-card-elevated: var(--color-obsidian-card-elevated);
+  --color-obsidian-border: var(--color-obsidian-card-border);
+
+  /* Overriding default Tailwind slate colors dynamically based on CSS theme variables */
+  --color-slate-50: var(--color-slate-override-50);
+  --color-slate-100: var(--color-slate-override-100);
+  --color-slate-200: var(--color-slate-override-200);
+  --color-slate-300: var(--color-slate-override-300);
+  --color-slate-350: var(--color-slate-override-350);
+  --color-slate-400: var(--color-slate-override-400);
+  --color-slate-450: var(--color-slate-override-450);
+  --color-slate-500: var(--color-slate-override-500);
+  --color-slate-550: var(--color-slate-override-550);
+  --color-slate-600: var(--color-slate-override-600);
+  --color-slate-700: var(--color-slate-override-700);
+  --color-slate-800: var(--color-slate-override-800);
+  --color-slate-900: var(--color-slate-override-900);
+  --color-slate-950: var(--color-slate-override-950);
+
+
+  /* Overriding default Tailwind colors dynamically based on CSS theme variables */
+  --color-blue-50: var(--color-blue-override-50);
+  --color-blue-100: var(--color-blue-override-100);
+  --color-blue-200: var(--color-blue-override-200);
+  --color-blue-300: var(--color-blue-override-300);
+  --color-blue-400: var(--color-blue-override-400);
+  --color-blue-500: var(--color-blue-override-500);
+  --color-blue-600: var(--color-blue-override-600);
+  --color-blue-700: var(--color-blue-override-700);
+  --color-blue-800: var(--color-blue-override-800);
+  --color-blue-900: var(--color-blue-override-900);
+  --color-blue-950: var(--color-blue-override-950);
+
+  --color-emerald-50: var(--color-emerald-override-50);
+  --color-emerald-100: var(--color-emerald-override-100);
+  --color-emerald-200: var(--color-emerald-override-200);
+  --color-emerald-300: var(--color-emerald-override-300);
+  --color-emerald-400: var(--color-emerald-override-400);
+  --color-emerald-500: var(--color-emerald-override-500);
+  --color-emerald-600: var(--color-emerald-override-600);
+  --color-emerald-700: var(--color-emerald-override-700);
+  --color-emerald-800: var(--color-emerald-override-800);
+  --color-emerald-950: var(--color-emerald-override-950);
+
+  --color-red-50: var(--color-red-override-50);
+  --color-red-100: var(--color-red-override-100);
+  --color-red-200: var(--color-red-override-200);
+  --color-red-300: var(--color-red-override-300);
+  --color-red-400: var(--color-red-override-400);
+  --color-red-500: var(--color-red-override-500);
+  --color-red-600: var(--color-red-override-600);
+  --color-red-700: var(--color-red-override-700);
+  --color-red-800: var(--color-red-override-800);
+  --color-red-900: var(--color-red-override-900);
+  --color-red-950: var(--color-red-override-950);
+
+  --color-indigo-50: var(--color-indigo-override-50);
+  --color-indigo-100: var(--color-indigo-override-100);
+  --color-indigo-200: var(--color-indigo-override-200);
+  --color-indigo-300: var(--color-indigo-override-300);
+  --color-indigo-400: var(--color-indigo-override-400);
+  --color-indigo-500: var(--color-indigo-override-500);
+  --color-indigo-600: var(--color-indigo-override-600);
+  --color-indigo-700: var(--color-indigo-override-700);
+  --color-indigo-800: var(--color-indigo-override-800);
+  --color-indigo-900: var(--color-indigo-override-900);
+
+  --color-purple-400: var(--color-purple-override-400);
+  --color-purple-500: var(--color-purple-override-500);
+  --color-purple-600: var(--color-purple-override-600);
+
+  --color-fuchsia-400: var(--color-fuchsia-override-400);
+  --color-fuchsia-500: var(--color-fuchsia-override-500);
+  --color-fuchsia-600: var(--color-fuchsia-override-600);
+}
+
+@utility font-sans {
+  font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@utility font-outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
+@utility btn-magnetic {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  
+  &:hover {
+    transform: scale(1.02);
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+@utility glass {
+  background: rgba(11, 15, 25, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@utility glass-card {
+  background: var(--color-obsidian-card-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--color-obsidian-border);
+  box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.55);
+}
+
+@utility glass-input {
+  background: var(--input-bg, rgba(2, 4, 10, 0.7));
+  border: 1px solid var(--input-border, rgba(255, 255, 255, 0.07));
+  color: var(--input-text, white);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:focus {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 3px var(--color-primary-glow);
+    outline: none;
+  }
+}
+
+@utility card-glow-blue {
+  box-shadow: 0 0 50px -10px var(--color-glow-blue-raw);
+}
+
+@utility card-glow-green {
+  box-shadow: 0 0 50px -10px var(--color-glow-green-raw);
+}
+
+@utility card-glow-red {
+  box-shadow: 0 0 40px -10px rgba(239, 68, 68, 0.12);
+}
+
+@utility animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-glow-pulse {
+  animation: glowPulse 2s infinite ease-in-out;
+}
+
+@utility animate-float-slow {
+  animation: floatSlow 12s infinite ease-in-out;
+}
+
+@utility animate-float-medium {
+  animation: floatMedium 8s infinite ease-in-out;
+}
+
+@utility cyber-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@utility card-glow-purple {
+  box-shadow: 0 0 60px -15px rgba(217, 70, 239, 0.2);
+}
+
+@utility card-glow-green {
+  box-shadow: 0 0 60px -15px rgba(16, 185, 129, 0.2);
+}
+
+@utility card-glow-theme {
+  box-shadow: 0 0 60px -15px var(--color-primary-glow), 0 0 20px -5px var(--color-primary-glow);
+}
+
+@utility text-cyber-glow {
+  text-shadow: 0 0 20px var(--color-cyber-text-glow);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-25px) scale(1.08);
+  }
+}
+
+@keyframes floatMedium {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) scale(1);
+  }
+  50% {
+    transform: translateY(18px) translateX(-18px) scale(0.94);
+  }
+}
+
+
+/* Base resets & styles */
+html {
+  background-color: #030712;
+}
+
+body {
+  font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
+  background-color: var(--bg-solid);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  transition: background-color 250ms ease, background-image 250ms ease, color 250ms ease;
+}
+
+/* Global silky theme transition – applies to all elements */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, box-shadow, opacity;
+  transition-duration: 250ms;
+  transition-timing-function: ease;
+}
+
+/* Exempt animation-only elements from the global transition so they keep their own timing */
+.animate-spin,
+.animate-pulse,
+.animate-float-slow,
+.animate-float-medium,
+.animate-glow-pulse {
+  transition: none !important;
+}
+
+/* Custom modern scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Skeleton Shimmer ──────────────────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 0%,
+    rgba(255,255,255,0.08) 40%,
+    rgba(255,255,255,0.04) 80%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+body.theme-light .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,0.05) 0%,
+    rgba(0,0,0,0.09) 40%,
+    rgba(0,0,0,0.05) 80%
+  );
+  background-size: 600px 100%;
+}
+
+/* ─── Zero Balance Ceremony ─────────────────────────────── */
+@keyframes mintRipple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(61, 255, 211, 0.35);
+    background-color: rgba(61, 255, 211, 0.06);
+  }
+  50% {
+    box-shadow: 0 0 0 20px rgba(61, 255, 211, 0);
+    background-color: rgba(61, 255, 211, 0.12);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(61, 255, 211, 0);
+    background-color: transparent;
+  }
+}
+
+.zero-balance-ceremony {
+  animation: mintRipple 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes checkmarkDraw {
+  from { stroke-dashoffset: 30; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.checkmark-path {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: checkmarkDraw 400ms cubic-bezier(0.16, 1, 0.3, 1) 200ms forwards;
+}
+
+/* ─── Number Roll ───────────────────────────────────────── */
+@keyframes numberBloom {
+  0%   { transform: scale(0.92); opacity: 0.6; }
+  60%  { transform: scale(1.04); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.number-bloom {
+  animation: numberBloom 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Command Palette ───────────────────────────────────── */
+@keyframes paletteIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.command-palette-enter {
+  animation: paletteIn 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Toast ─────────────────────────────────────────────── */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(4px) scale(0.96); }
+}
+
+.toast-enter { animation: toastIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.toast-exit  { animation: toastOut 200ms ease-in forwards; }
+
+/* ─── Flow Map Lines ────────────────────────────────────── */
+@keyframes lineDraw {
+  from { stroke-dashoffset: var(--dash-length, 200); }
+  to   { stroke-dashoffset: 0; }
+}
+
+.flow-line {
+  stroke-dasharray: var(--dash-length, 200);
+  stroke-dashoffset: var(--dash-length, 200);
+  animation: lineDraw 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Hover contextual actions ──────────────────────────── */
+.expense-row-actions {
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.expense-row:hover .expense-row-actions,
+.expense-row:focus-within .expense-row-actions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
