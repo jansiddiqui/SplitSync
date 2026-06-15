@@ -58,3 +58,8 @@ SplitSync connects to a hosted PostgreSQL instance via Supabase. Before running 
 ### 3. Transaction Safety (RPC)
 * **Atomic Writes**: Creating an expense automatically rolls back both the expense and the splits if either insertion fails.
 * **Client Fallback**: The client tries calling the transaction RPC first, falling back to individual table insert queries if the database migration has not yet been executed.
+
+---
+
+## 🤖 AI Used
+This application was engineered, optimized, and hardened in collaboration with **Antigravity by Google DeepMind**, an agentic AI pair-programming partner. Detailed prompts, AI-assisted code revisions, and debugging logs are documented in [`AI_USAGE.md`](file:///d:/Project/SpreeTail/SplitSync/AI_USAGE.md).

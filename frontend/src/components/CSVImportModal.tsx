@@ -1954,6 +1954,122 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
     return stagingRows; // all rows (including deleted)
   };
 
+  const handleDownloadImportReport = () => {
+    if (!summaryMetrics) return;
+
+    let markdown = `# SplitSync - Ingestion & Anomaly Audit Report\n\n`;
+    markdown += `**Report Generated**: ${new Date().toLocaleString()}\n`;
+    markdown += `**Source File**: ${fileName || 'imported_expenses.csv'}\n`;
+    markdown += `**Base Currency**: ${baseCurrency}\n\n`;
+
+    markdown += `## 1. Executive Ingestion Metrics\n\n`;
+    markdown += `| Metric | Count / Value |\n`;
+    markdown += `| :--- | :--- |\n`;
+    markdown += `| **Total Raw Rows in CSV** | ${summaryMetrics.totalRows} |\n`;
+    markdown += `| **Successfully Imported Transactions** | ${summaryMetrics.importedCount} |\n`;
+    markdown += `| **Skipped/Discarded Rows** | ${summaryMetrics.totalRows - summaryMetrics.importedCount} |\n`;
+    markdown += `| **Total Volume Ingested (Base Currency)** | ${baseCurrency} ${summaryMetrics.totalAmountBase.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} |\n`;
+    markdown += `| **Total Anomalies Detected & Resolved** | ${summaryMetrics.anomalyCount} |\n\n`;
+
+    markdown += `## 2. Row-by-Row Ingestion & Resolution Log\n\n`;
+    markdown += `Below is the audit log details of each row in the CSV file, showing the anomalies detected and resolutions applied:\n\n`;
+    markdown += `| Row | Date | Description | CSV Payer | CSV Amount | Status | Resolution Details & Actions Taken |\n`;
+    markdown += `| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n`;
+
+    stagingRows.forEach((row) => {
+      const displayRowIndex = row.rowIndex + 1;
+      const originalAmount = `${row.currencyCSV || baseCurrency} ${row.amountCSV}`;
+      
+      let status = '';
+      let resolutionActions: string[] = [];
+
+      if (row.isDeleted) {
+        status = '❌ Skipped';
+        resolutionActions.push('Discarded/skipped from import.');
+      } else if (row.isSettlement) {
+        status = '✅ Ingested (Settlement)';
+        resolutionActions.push('Mapped and imported as a Settlement debt resolution.');
+      } else {
+        status = '✅ Ingested (Expense)';
+      }
+
+      if (row.anomalies && row.anomalies.length > 0) {
+        row.anomalies.forEach((anom) => {
+          let actionText = '';
+          switch (anom.category) {
+            case 'user_not_in_group':
+              actionText = `**User not in group**: Auto-joined user "${row.paidByCSV}" to group roster.`;
+              break;
+            case 'expense_before_member_joined':
+              actionText = `**Timeline conflict**: Backdated joined_at timestamp for "${row.paidByCSV}" to allow transaction on ${row.dateStr}.`;
+              break;
+            case 'unknown_participant':
+              actionText = `**Unregistered user**: Created placeholder guest account for "${anom.meta?.unknownName || 'unknown user'}".`;
+              break;
+            case 'currency_mismatch':
+              actionText = `**Currency Mismatch**: Converted to base currency ${baseCurrency} at an exchange rate of ${row.exchangeRate}.`;
+              break;
+            case 'duplicate_expense':
+            case 'duplicate_settlement':
+            case 'duplicate_but_conflicting_records':
+              if (row.isDeleted) {
+                actionText = `**Duplicate Resolved**: Row skipped because user marked duplicate to discard.`;
+              } else {
+                actionText = `**Duplicate Resolved**: Kept this entry and resolved duplicate status.`;
+              }
+              break;
+            case 'percentage_total_!=_100':
+              actionText = `**Percentage Split Mismatch**: Normalized percentages to equal exactly 100%.`;
+              break;
+            case 'precision_anomaly':
+              actionText = `**Precision Anomaly**: Rounded amount ${row.amountCSV} to 2 decimals (${row.parsedAmount}) and allocated remainder paise.`;
+              break;
+            case 'format_anomaly':
+              actionText = `**Format Anomaly**: Stripped quotes/commas from amount value and parsed successfully.`;
+              break;
+            case 'ambiguous_date_format':
+              actionText = `**Ambiguous Date**: Parsed date string "${row.dateStr}" into valid calendar date ${row.parsedDate ? new Date(row.parsedDate).toLocaleDateString() : 'N/A'}.`;
+              break;
+            case 'settlement_logged_as_expense':
+              actionText = `**Classification Error**: Transaction type auto-converted from Expense to Settlement based on keyword detection.`;
+              break;
+            case 'invalid_payer_name':
+            case 'invalid_participant_name':
+              actionText = `**Reserved Keyword Error**: Filtered invalid system reserved word from name mapping.`;
+              break;
+            default:
+              actionText = `**${anom.category.replace(/_/g, ' ')}**: ${anom.description} (Resolved).`;
+              break;
+          }
+          if (actionText) {
+            resolutionActions.push(actionText);
+          }
+        });
+      }
+
+      if (resolutionActions.length === 0) {
+        resolutionActions.push('Ingested clean with zero anomalies.');
+      }
+
+      const escapedDesc = row.description.replace(/\|/g, '\\|');
+      const escapedPayer = row.paidByCSV.replace(/\|/g, '\\|');
+      const actionsStr = resolutionActions.join('<br/> ');
+
+      markdown += `| ${displayRowIndex} | ${row.dateStr} | ${escapedDesc} | ${escapedPayer} | ${originalAmount} | ${status} | ${actionsStr} |\n`;
+    });
+
+    markdown += `\n---\n*Report generated automatically by SplitSync Ingestion Engine.*`;
+
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Import_Report_${new Date().toISOString().slice(0,10)}_${fileName.replace(/\.[^/.]+$/, "")}.md`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const filteredStaging = getFilteredRows();
 
   return (
@@ -2543,10 +2659,16 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                 </div>
               </div>
 
-              <div className="pt-6">
+              <div className="pt-6 flex flex-col gap-3">
+                <button
+                  onClick={handleDownloadImportReport}
+                  className="w-full py-3 rounded-xl text-xs font-extrabold bg-gradient-to-r from-primary to-accent text-obsidian hover:brightness-110 transition hover:cursor-pointer shadow-lg shadow-primary/20 flex items-center justify-center gap-1.5"
+                >
+                  📥 Download Import Report (Markdown)
+                </button>
                 <button
                   onClick={() => onClose(true)}
-                  className="w-full py-3 rounded-xl text-xs font-extrabold bg-gradient-to-r from-primary to-accent text-obsidian hover:brightness-110 transition hover:cursor-pointer shadow-lg shadow-primary/20"
+                  className="w-full py-3 rounded-xl text-xs font-extrabold bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition hover:cursor-pointer"
                 >
                   Return to Experience Detail
                 </button>
