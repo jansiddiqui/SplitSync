@@ -172,43 +172,61 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
     const rate = parseFloat(exp.exchange_rate) || 1.0;
     const expTime = exp.created_at ? new Date(exp.created_at).getTime() : 0;
     
-    // Amount in base currency (rounded to 2 decimal places, then converted to paise)
-    const baseAmtPaise = toPaise(parseFloat((rawAmt * rate).toFixed(2)));
-
-    // Verify payer was active in group on expense date
+    // 1. Verify payer was active in group on expense date
     let isPayerActive = true;
     const payerTimeline = memberTimelineMap[payerId];
     if (payerTimeline) {
       isPayerActive = expTime >= payerTimeline.joined && (payerTimeline.left === null || expTime <= payerTimeline.left);
     }
+    if (!isPayerActive) {
+      console.warn(`Ignoring expense ${exp.id} due to inactive payer ${payerId} on date ${exp.created_at}`);
+      return; // Skip the entire expense to prevent ledger mismatch
+    }
 
-    if (isPayerActive) {
-      totalSpentPaise += baseAmtPaise;
-      // Credit payer
-      if (netBalancesPaise[payerId] !== undefined) {
-        netBalancesPaise[payerId] += baseAmtPaise;
+    // 2. Pre-verify all participants are active and belong to group roster on expense date
+    const splits = exp.ExpenseSplit || [];
+    let hasInvalidParticipant = false;
+
+    for (const split of splits) {
+      const splitUserId = split.user_id;
+
+      // Participant must be in group roster
+      if (netBalancesPaise[splitUserId] === undefined) {
+        hasInvalidParticipant = true;
+        break;
+      }
+
+      // Participant must be active on transaction date
+      const partTimeline = memberTimelineMap[splitUserId];
+      if (partTimeline) {
+        const isPartActive = expTime >= partTimeline.joined && (partTimeline.left === null || expTime <= partTimeline.left);
+        if (!isPartActive) {
+          hasInvalidParticipant = true;
+          break;
+        }
       }
     }
 
+    if (hasInvalidParticipant) {
+      console.warn(`Ignoring expense ${exp.id} due to inactive or invalid participant splits on date ${exp.created_at}`);
+      return; // Skip the entire expense to preserve double-entry balance parity
+    }
+
+    // 3. Apply credits and debits once atomic transaction validity is verified
+    const baseAmtPaise = toPaise(parseFloat((rawAmt * rate).toFixed(2)));
+    totalSpentPaise += baseAmtPaise;
+
+    // Credit payer
+    if (netBalancesPaise[payerId] !== undefined) {
+      netBalancesPaise[payerId] += baseAmtPaise;
+    }
+
     // Debit split members
-    const splits = exp.ExpenseSplit || [];
     splits.forEach((split: any) => {
       const splitUserId = split.user_id;
       const rawSplitAmt = parseFloat(split.amount) || 0;
       const splitBaseAmtPaise = toPaise(parseFloat((rawSplitAmt * rate).toFixed(2)));
-
-      // Verify participant was active in group on expense date
-      let isParticipantActive = true;
-      const partTimeline = memberTimelineMap[splitUserId];
-      if (partTimeline) {
-        isParticipantActive = expTime >= partTimeline.joined && (partTimeline.left === null || expTime <= partTimeline.left);
-      }
-
-      if (isPayerActive && isParticipantActive) {
-        if (netBalancesPaise[splitUserId] !== undefined) {
-          netBalancesPaise[splitUserId] -= splitBaseAmtPaise;
-        }
-      }
+      netBalancesPaise[splitUserId] -= splitBaseAmtPaise;
     });
   });
 
