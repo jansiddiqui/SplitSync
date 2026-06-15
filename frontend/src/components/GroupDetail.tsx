@@ -1401,42 +1401,53 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
           </div>
 
           {/* Action row in cover */}
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto shrink-0 z-10">
+          <div className="grid grid-cols-6 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto shrink-0 z-10">
             <button
               onClick={() => setShowExpenseModal(true)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary to-accent hover:brightness-110 text-obsidian transition text-xs font-extrabold shadow-lg shadow-primary/20 hover:cursor-pointer btn-magnetic"
+              className="col-span-2 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-primary to-accent hover:brightness-110 text-obsidian transition text-xs font-extrabold shadow-lg shadow-primary/20 hover:cursor-pointer btn-magnetic"
             >
               <Plus className="w-3.5 h-3.5 text-obsidian" /> Log<span className="hidden sm:inline"> Contribution</span>
             </button>
             <button
               onClick={() => setShowSettlementModal(true)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-primary transition text-xs font-extrabold border border-white/5 hover:cursor-pointer btn-magnetic"
+              className="col-span-2 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-primary transition text-xs font-extrabold border border-white/5 hover:cursor-pointer btn-magnetic"
             >
               <CreditCard className="w-3.5 h-3.5 text-primary" /> Resolve<span className="hidden sm:inline"> Share</span>
             </button>
             <button
               onClick={() => setShowCSVImportModal(true)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-emerald-400 border border-white/5 hover:cursor-pointer transition text-xs font-extrabold btn-magnetic"
+              className="col-span-2 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-emerald-400 border border-white/5 hover:cursor-pointer transition text-xs font-extrabold btn-magnetic"
             >
               <RefreshCw className="w-3.5 h-3.5 text-emerald-400" /> Import<span className="hidden sm:inline"> CSV</span>
             </button>
             <button
               onClick={() => setShowMilestoneModal(true)}
-              className="flex items-center justify-center p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-slate-200 transition hover:cursor-pointer btn-magnetic"
+              className="col-span-3 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-slate-200 transition hover:cursor-pointer btn-magnetic text-xs font-extrabold"
               title="Log milestone or moment memory"
             >
-              <Camera className="w-4 h-4" />
+              <Camera className="w-4 h-4 shrink-0 text-slate-200" />
+              <span className="sm:hidden">Add Moment</span>
             </button>
             <button
               onClick={handleToggleVault}
-              className={`flex items-center justify-center p-2.5 rounded-xl border transition hover:cursor-pointer btn-magnetic ${
+              className={`col-span-3 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border transition hover:cursor-pointer btn-magnetic text-xs font-extrabold ${
                 isVaulted
                   ? 'bg-purple-500/10 border-purple-500/20 text-purple-400 hover:bg-purple-500/20'
                   : 'bg-white/5 border-white/5 text-slate-400 hover:text-slate-200'
               }`}
               title={isVaulted ? 'Return Experience to active list' : 'Archive Experience to Memory Vault'}
             >
-              {isVaulted ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+              {isVaulted ? (
+                <>
+                  <Unlock className="w-4 h-4 shrink-0" />
+                  <span className="sm:hidden">Unvault</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4 shrink-0" />
+                  <span className="sm:hidden">Vault</span>
+                </>
+              )}
             </button>
           </div>
         </div>
