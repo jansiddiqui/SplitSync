@@ -1744,22 +1744,22 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
                         )}
 
                         {/* Interactive Fairness Explainer Trigger */}
-                        <div className="mt-3.5 pt-3 border-t border-white/[0.03] flex justify-between items-center text-[10px] font-bold text-slate-500">
+                        <div className="mt-3.5 pt-3 border-t border-white/[0.03] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 text-[10px] font-bold text-slate-500">
                           <button
                             onClick={() => setExpandedFairnessId(expandedFairnessId === expense.id ? null : expense.id)}
-                            className="flex items-center gap-1 text-primary hover:text-primary-light transition hover:cursor-pointer p-1 rounded hover:bg-primary/5 border border-transparent hover:border-primary/10"
+                            className="flex items-center gap-1.5 text-primary hover:text-primary-light transition hover:cursor-pointer p-1 rounded hover:bg-primary/5 border border-transparent hover:border-primary/10 w-full sm:w-auto"
                           >
-                            <Info className="w-3.5 h-3.5 text-primary" />
-                            <span>Why is my share ₹{owedVal.toFixed(0)}? (Fairness breakdown)</span>
+                            <Info className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span className="text-left">Why is my share ₹{owedVal.toFixed(0)}? (Fairness breakdown)</span>
                           </button>
-
-                          <div className="flex items-center gap-2">
+ 
+                          <div className="flex items-center justify-end gap-2 w-full sm:w-auto shrink-0">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveExpenseChatId(expense.id);
                               }}
-                              className="px-2.5 py-1 rounded-lg bg-slate-800/90 border border-white/10 text-slate-450 hover:text-primary text-[10px] font-bold hover:cursor-pointer hover:border-primary/30 transition"
+                              className="px-2.5 py-1.5 rounded-lg bg-slate-800/90 border border-white/10 text-slate-450 hover:text-primary text-[10px] font-bold hover:cursor-pointer hover:border-primary/30 transition whitespace-nowrap"
                             >
                               Discuss Chat
                             </button>
@@ -1768,7 +1768,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
                                 e.stopPropagation();
                                 handleDeleteExpense(expense);
                               }}
-                              className="px-2.5 py-1 rounded-lg bg-red-950/20 border border-red-500/15 text-red-400 hover:bg-red-500 hover:text-white text-[10px] font-bold hover:cursor-pointer transition"
+                              className="px-2.5 py-1.5 rounded-lg bg-red-950/20 border border-red-500/15 text-red-400 hover:bg-red-500 hover:text-white text-[10px] font-bold hover:cursor-pointer transition whitespace-nowrap"
                             >
                               Delete
                             </button>
