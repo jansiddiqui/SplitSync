@@ -73,6 +73,7 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
 
   const memberNameMap: { [userId: string]: string } = {};
   const netBalancesPaise: { [userId: string]: number } = {};
+  const memberTimelineMap: { [userId: string]: { joined: number; left: number | null } } = {};
 
   (members || []).forEach((m: any) => {
     const u = m.User;
@@ -80,6 +81,10 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
       memberNameMap[m.user_id] = u.name;
     }
     netBalancesPaise[m.user_id] = 0;
+    memberTimelineMap[m.user_id] = {
+      joined: m.joined_at ? new Date(m.joined_at).getTime() : 0,
+      left: m.left_at ? new Date(m.left_at).getTime() : null,
+    };
   });
 
   // 2. Fetch expenses and splits (filtering out soft deleted ones)
@@ -165,14 +170,24 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
     const payerId = exp.paid_by;
     const rawAmt = parseFloat(exp.amount) || 0;
     const rate = parseFloat(exp.exchange_rate) || 1.0;
+    const expTime = exp.created_at ? new Date(exp.created_at).getTime() : 0;
     
     // Amount in base currency (rounded to 2 decimal places, then converted to paise)
     const baseAmtPaise = toPaise(parseFloat((rawAmt * rate).toFixed(2)));
-    totalSpentPaise += baseAmtPaise;
 
-    // Credit payer
-    if (netBalancesPaise[payerId] !== undefined) {
-      netBalancesPaise[payerId] += baseAmtPaise;
+    // Verify payer was active in group on expense date
+    let isPayerActive = true;
+    const payerTimeline = memberTimelineMap[payerId];
+    if (payerTimeline) {
+      isPayerActive = expTime >= payerTimeline.joined && (payerTimeline.left === null || expTime <= payerTimeline.left);
+    }
+
+    if (isPayerActive) {
+      totalSpentPaise += baseAmtPaise;
+      // Credit payer
+      if (netBalancesPaise[payerId] !== undefined) {
+        netBalancesPaise[payerId] += baseAmtPaise;
+      }
     }
 
     // Debit split members
@@ -182,8 +197,17 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
       const rawSplitAmt = parseFloat(split.amount) || 0;
       const splitBaseAmtPaise = toPaise(parseFloat((rawSplitAmt * rate).toFixed(2)));
 
-      if (netBalancesPaise[splitUserId] !== undefined) {
-        netBalancesPaise[splitUserId] -= splitBaseAmtPaise;
+      // Verify participant was active in group on expense date
+      let isParticipantActive = true;
+      const partTimeline = memberTimelineMap[splitUserId];
+      if (partTimeline) {
+        isParticipantActive = expTime >= partTimeline.joined && (partTimeline.left === null || expTime <= partTimeline.left);
+      }
+
+      if (isPayerActive && isParticipantActive) {
+        if (netBalancesPaise[splitUserId] !== undefined) {
+          netBalancesPaise[splitUserId] -= splitBaseAmtPaise;
+        }
       }
     });
   });
@@ -194,14 +218,30 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
     const receiverId = set.receiver_id;
     const rawAmt = parseFloat(set.amount) || 0;
     const rate = parseFloat(set.exchange_rate) || 1.0;
+    const setTime = set.created_at ? new Date(set.created_at).getTime() : 0;
 
     const baseAmtPaise = toPaise(parseFloat((rawAmt * rate).toFixed(2)));
 
-    if (netBalancesPaise[payerId] !== undefined) {
-      netBalancesPaise[payerId] += baseAmtPaise;
+    // Verify both payer and receiver were active on settlement date
+    let isPayerActive = true;
+    const payerTimeline = memberTimelineMap[payerId];
+    if (payerTimeline) {
+      isPayerActive = setTime >= payerTimeline.joined && (payerTimeline.left === null || setTime <= payerTimeline.left);
     }
-    if (netBalancesPaise[receiverId] !== undefined) {
-      netBalancesPaise[receiverId] -= baseAmtPaise;
+
+    let isReceiverActive = true;
+    const receiverTimeline = memberTimelineMap[receiverId];
+    if (receiverTimeline) {
+      isReceiverActive = setTime >= receiverTimeline.joined && (receiverTimeline.left === null || setTime <= receiverTimeline.left);
+    }
+
+    if (isPayerActive && isReceiverActive) {
+      if (netBalancesPaise[payerId] !== undefined) {
+        netBalancesPaise[payerId] += baseAmtPaise;
+      }
+      if (netBalancesPaise[receiverId] !== undefined) {
+        netBalancesPaise[receiverId] -= baseAmtPaise;
+      }
     }
   });
 
