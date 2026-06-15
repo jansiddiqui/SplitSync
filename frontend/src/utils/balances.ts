@@ -15,11 +15,19 @@ export interface SimplifiedTransaction {
   toName: string;
 }
 
+export interface IgnoredTransaction {
+  id: string;
+  title: string;
+  amount: number;
+  reason: string;
+}
+
 export interface GroupBalances {
   netBalances: { [userId: string]: number };
   simplifiedTransactions: SimplifiedTransaction[];
   totalSpent: number;
   outstanding: number;
+  ignoredTransactions: IgnoredTransaction[];
 }
 
 export const getGroupBalances = async (groupId: string): Promise<GroupBalances> => {
@@ -161,6 +169,7 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
 
   // Compute total spent in group (converted to base currency)
   let totalSpentPaise = 0;
+  const ignoredTransactions: IgnoredTransaction[] = [];
 
   // Helper to convert inputs to integer paise
   const toPaise = (num: number) => Math.round(num * 100);
@@ -180,12 +189,19 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
     }
     if (!isPayerActive) {
       console.warn(`Ignoring expense ${exp.id} due to inactive payer ${payerId} on date ${exp.created_at}`);
+      ignoredTransactions.push({
+        id: exp.id,
+        title: exp.title || 'Untitled Contribution',
+        amount: rawAmt,
+        reason: `Payer "${memberNameMap[payerId] || 'Unknown'}" was not active in the experience on this date.`,
+      });
       return; // Skip the entire expense to prevent ledger mismatch
     }
 
     // 2. Pre-verify all participants are active and belong to group roster on expense date
     const splits = exp.ExpenseSplit || [];
     let hasInvalidParticipant = false;
+    let invalidParticipantName = 'Unknown';
 
     for (const split of splits) {
       const splitUserId = split.user_id;
@@ -193,6 +209,7 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
       // Participant must be in group roster
       if (netBalancesPaise[splitUserId] === undefined) {
         hasInvalidParticipant = true;
+        invalidParticipantName = 'Non-roster member';
         break;
       }
 
@@ -202,6 +219,7 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
         const isPartActive = expTime >= partTimeline.joined && (partTimeline.left === null || expTime <= partTimeline.left);
         if (!isPartActive) {
           hasInvalidParticipant = true;
+          invalidParticipantName = memberNameMap[splitUserId] || 'Unknown';
           break;
         }
       }
@@ -209,6 +227,12 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
 
     if (hasInvalidParticipant) {
       console.warn(`Ignoring expense ${exp.id} due to inactive or invalid participant splits on date ${exp.created_at}`);
+      ignoredTransactions.push({
+        id: exp.id,
+        title: exp.title || 'Untitled Contribution',
+        amount: rawAmt,
+        reason: `Participant "${invalidParticipantName}" was not active in the experience on this date.`,
+      });
       return; // Skip the entire expense to preserve double-entry balance parity
     }
 
@@ -332,6 +356,7 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
     simplifiedTransactions,
     totalSpent: parseFloat((totalSpentPaise / 100).toFixed(2)),
     outstanding: parseFloat((outstandingPaise / 100).toFixed(2)),
+    ignoredTransactions,
   };
 };
 
