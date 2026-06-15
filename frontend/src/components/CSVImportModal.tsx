@@ -2467,19 +2467,27 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
 
               {/* Commit Footer */}
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-obsidian-card-elevated border border-white/5 p-4 rounded-2xl shrink-0 mt-auto">
-                <div className="text-xs text-slate-400 text-center sm:text-left">
-                  <span className="font-bold text-slate-200">
-                    {stagingRows.filter((r) => !r.isDeleted).length} / {stagingRows.length}
-                  </span>{' '}
-                  rows active •{' '}
-                  <span className="font-bold text-amber-400">
-                    {stagingRows.filter((r) => !r.isDeleted && r.anomalies.length > 0).length}
-                  </span>{' '}
-                  with warnings •{' '}
-                  <span className="font-bold text-red-400">
-                    {stagingRows.filter((r) => !r.isDeleted && r.anomalies.some((a) => a.severity === 'critical')).length}
-                  </span>{' '}
-                  critical blockers
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-2 gap-y-1 text-xs text-slate-400">
+                  <span className="whitespace-nowrap">
+                    <span className="font-bold text-slate-200">
+                      {stagingRows.filter((r) => !r.isDeleted).length} / {stagingRows.length}
+                    </span>{' '}
+                    rows active
+                  </span>
+                  <span className="hidden sm:inline text-slate-600">•</span>
+                  <span className="whitespace-nowrap">
+                    <span className="font-bold text-amber-400">
+                      {stagingRows.filter((r) => !r.isDeleted && r.anomalies.length > 0).length}
+                    </span>{' '}
+                    with warnings
+                  </span>
+                  <span className="hidden sm:inline text-slate-600">•</span>
+                  <span className="whitespace-nowrap">
+                    <span className="font-bold text-red-400">
+                      {stagingRows.filter((r) => !r.isDeleted && r.anomalies.some((a) => a.severity === 'critical')).length}
+                    </span>{' '}
+                    critical blockers
+                  </span>
                 </div>
 
                 <div className="flex gap-3 w-full sm:w-auto">
