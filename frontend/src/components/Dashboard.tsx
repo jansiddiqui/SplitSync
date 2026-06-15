@@ -422,7 +422,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectGroup, onOpenComma
   if (loading && groups.length === 0) {
     return (
       <div className="min-h-screen flex flex-col lg:flex-row bg-transparent">
-        <aside className="hidden lg:flex w-64 border-r border-white/5 bg-obsidian/50 shrink-0 p-6">
+        <aside className="hidden lg:flex w-64 border-r border-white/5 bg-obsidian/50 shrink-0 p-6 h-screen sticky top-0 overflow-y-auto no-scrollbar">
           <div className="w-full space-y-4 mt-2">
             <div className="flex items-center gap-2.5 mb-8">
               <div className="skeleton-shimmer w-8 h-8 rounded-xl" />
@@ -490,7 +490,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectGroup, onOpenComma
             onClick={() => setShowMobileMenu(false)}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
           />
-          <aside className="relative w-72 max-w-[80vw] bg-obsidian border-r border-white/10 h-full flex flex-col justify-between p-6 shadow-2xl animate-in slide-in-from-left duration-200 z-10">
+          <aside className="relative w-72 max-w-[80vw] bg-obsidian border-r border-white/10 h-full flex flex-col justify-between p-6 shadow-2xl animate-in slide-in-from-left duration-200 z-10 overflow-y-auto no-scrollbar">
             <div className="space-y-8">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
@@ -583,7 +583,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectGroup, onOpenComma
       )}
 
       {/* 1. Left Sidebar Navigation (Desktop) */}
-      <aside className="hidden lg:flex w-64 border-r border-white/5 bg-obsidian/50 backdrop-blur-md shrink-0 flex-col justify-between p-6" id="dashboard-sidebar">
+      <aside className="hidden lg:flex w-64 border-r border-white/5 bg-obsidian/50 backdrop-blur-md shrink-0 flex-col justify-between p-6 h-screen sticky top-0 overflow-y-auto no-scrollbar" id="dashboard-sidebar">
         <div className="space-y-8">
           <div className="flex items-center gap-2.5">
             <Logo className="w-8 h-8" />

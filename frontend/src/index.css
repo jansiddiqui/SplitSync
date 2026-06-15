@@ -344,6 +344,15 @@ body.theme-light {
   }
 }
 
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+
 @utility glass {
   background: rgba(11, 15, 25, 0.4);
   backdrop-filter: blur(20px);
