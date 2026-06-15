@@ -1747,19 +1747,19 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
                         <div className="mt-3.5 pt-3 border-t border-white/[0.03] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 text-[10px] font-bold text-slate-500">
                           <button
                             onClick={() => setExpandedFairnessId(expandedFairnessId === expense.id ? null : expense.id)}
-                            className="flex items-center gap-1.5 text-primary hover:text-primary-light transition hover:cursor-pointer p-1 rounded hover:bg-primary/5 border border-transparent hover:border-primary/10 w-full sm:w-auto"
+                            className="flex items-center justify-center sm:justify-start gap-1.5 text-primary hover:text-primary-light transition hover:cursor-pointer p-1 rounded hover:bg-primary/5 border border-transparent hover:border-primary/10 w-full sm:w-auto text-center sm:text-left"
                           >
                             <Info className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <span className="text-left">Why is my share ₹{owedVal.toFixed(0)}? (Fairness breakdown)</span>
+                            <span>Why is my share ₹{owedVal.toFixed(0)}? (Fairness breakdown)</span>
                           </button>
  
-                          <div className="flex items-center justify-end gap-2 w-full sm:w-auto shrink-0">
+                          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveExpenseChatId(expense.id);
                               }}
-                              className="px-2.5 py-1.5 rounded-lg bg-slate-800/90 border border-white/10 text-slate-450 hover:text-primary text-[10px] font-bold hover:cursor-pointer hover:border-primary/30 transition whitespace-nowrap"
+                              className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg bg-slate-800/90 border border-white/10 text-slate-450 hover:text-primary text-[10px] font-bold hover:cursor-pointer hover:border-primary/30 transition whitespace-nowrap text-center"
                             >
                               Discuss Chat
                             </button>
@@ -1768,7 +1768,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
                                 e.stopPropagation();
                                 handleDeleteExpense(expense);
                               }}
-                              className="px-2.5 py-1.5 rounded-lg bg-red-950/20 border border-red-500/15 text-red-400 hover:bg-red-500 hover:text-white text-[10px] font-bold hover:cursor-pointer transition whitespace-nowrap"
+                              className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg bg-red-950/20 border border-red-500/15 text-red-400 hover:bg-red-500 hover:text-white text-[10px] font-bold hover:cursor-pointer transition whitespace-nowrap text-center"
                             >
                               Delete
                             </button>
