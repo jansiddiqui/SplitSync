@@ -1373,7 +1373,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
         <div className="absolute inset-0 bg-black/15 backdrop-blur-[1px] pointer-events-none" />
         
         {/* Status indicator badges */}
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
+        <div className="relative sm:absolute top-0 sm:top-4 right-0 sm:right-4 z-10 mb-4 sm:mb-0 self-start sm:self-auto flex gap-2">
           {isVaulted ? (
             <span className="text-[8px] bg-purple-500/25 text-purple-300 border border-purple-500/35 font-bold px-3 py-1 rounded-full tracking-wider uppercase shadow-md flex items-center gap-1 select-none">
               <Lock className="w-3 h-3" /> Vaulted Memory
