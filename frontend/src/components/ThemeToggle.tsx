@@ -30,6 +30,9 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ compact = false, class
 
   const toggle = () => applyTheme(theme === 'midnight' ? 'aurora' : 'midnight');
 
+  const hasPosition = className.includes('absolute') || className.includes('fixed') || className.includes('relative') || className.includes('static');
+  const positionClass = hasPosition ? '' : 'relative';
+
   /* ── Compact (icon-only) mode ── */
   if (compact) {
     return (
@@ -37,7 +40,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ compact = false, class
         id="btn-theme-toggle-compact"
         onClick={toggle}
         title={`Switch to ${theme === 'midnight' ? 'Aurora' : 'Midnight'} theme`}
-        className={`relative p-2 rounded-xl border transition-all duration-300 hover:cursor-pointer group ${
+        className={`${positionClass} p-2 rounded-xl border transition-all duration-300 hover:cursor-pointer group ${
           theme === 'midnight'
             ? 'bg-white/5 border-white/10 text-slate-400 hover:text-primary hover:border-primary/30 hover:bg-primary/5'
             : 'bg-amber-50/10 border-amber-400/20 text-amber-500 hover:text-amber-400'
@@ -59,7 +62,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ compact = false, class
 
   return (
     <div
-      className={`relative flex items-center p-1 rounded-2xl border border-white/8 bg-black/30 backdrop-blur-md gap-0 ${className}`}
+      className={`${positionClass} flex items-center p-1 rounded-2xl border border-white/8 bg-black/30 backdrop-blur-md gap-0 ${className}`}
       role="group"
       aria-label="Theme selector"
     >
