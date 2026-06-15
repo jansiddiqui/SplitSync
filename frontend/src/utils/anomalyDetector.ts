@@ -35,7 +35,7 @@ export interface StagingExpense {
 // Maps specific anomaly category to high-level group
 export function getAnomalyGroup(category: string): string {
   const duplicate = ['duplicate_expense', 'duplicate_settlement', 'duplicate_but_conflicting_records'];
-  const membership = ['user_not_in_group', 'expense_before_member_joined', 'expense_after_member_left', 'unknown_participant'];
+  const membership = ['user_not_in_group', 'expense_before_member_joined', 'expense_after_member_left', 'unknown_participant', 'invalid_participant_name', 'invalid_payer_name'];
   const currency = ['currency_mismatch', 'missing_exchange_rate'];
   const missing = ['empty_description', 'missing_payer', 'missing_participants', 'invalid_date', 'invalid_amount', 'future_date', 'ambiguous_date_format'];
   const split = ['invalid_split_type', 'conflicting_split_schema', 'split_total_mismatch', 'percentage_total_!=_100', 'share_total_=_0', 'negative_amount', 'refund_transaction', 'precision_anomaly', 'format_anomaly', 'outlier_amount'];
@@ -373,15 +373,24 @@ export function detectRowAnomalies(
 
 
   // 5. Payer checks
+  const RESERVED_WORDS = ['equal', 'unequal', 'percentage', 'share', 'inr', 'usd', 'eur', 'gbp'];
   const paidByCSV = row.paid_by ? row.paid_by.trim() : '';
-  let paidByUserId = fuzzyMapMember(paidByCSV, groupMembers);
+  let paidByUserId = null;
   let isSystemUserOnly = false;
+  let isPayerReserved = false;
 
-  if (!paidByUserId && paidByCSV) {
-    const sysUser = fuzzyMapSystemUser(paidByCSV, systemUsers);
-    if (sysUser) {
-      paidByUserId = sysUser.id;
-      isSystemUserOnly = true;
+  if (paidByCSV) {
+    if (RESERVED_WORDS.includes(paidByCSV.toLowerCase())) {
+      isPayerReserved = true;
+    } else {
+      paidByUserId = fuzzyMapMember(paidByCSV, groupMembers);
+      if (!paidByUserId) {
+        const sysUser = fuzzyMapSystemUser(paidByCSV, systemUsers);
+        if (sysUser) {
+          paidByUserId = sysUser.id;
+          isSystemUserOnly = true;
+        }
+      }
     }
   }
 
@@ -390,6 +399,12 @@ export function detectRowAnomalies(
       category: 'missing_payer',
       severity: 'critical',
       description: 'Payer name is missing in the export sheet.',
+    });
+  } else if (isPayerReserved) {
+    anomalies.push({
+      category: 'invalid_payer_name',
+      severity: 'critical',
+      description: `Payer name "${paidByCSV}" matches a reserved split type or currency. Please verify your CSV column mapping.`,
     });
   } else if (!paidByUserId) {
     anomalies.push({
@@ -483,6 +498,16 @@ export function detectRowAnomalies(
   const nonGroupLegacyNames: string[] = [];
 
   participants.forEach((p) => {
+    const pLower = p.toLowerCase().trim();
+    if (RESERVED_WORDS.includes(pLower)) {
+      anomalies.push({
+        category: 'invalid_participant_name',
+        severity: 'critical',
+        description: `Split participant name "${p}" matches a reserved split type or currency. Please verify your CSV column mapping.`,
+      });
+      return;
+    }
+
     let uid = fuzzyMapMember(p, groupMembers);
     if (uid) {
       participantIds.push(uid);

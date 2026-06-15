@@ -598,22 +598,28 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
     stagingRows.forEach((row) => {
       if (row.isDeleted) return;
 
+      const RESERVED_WORDS = ['equal', 'unequal', 'percentage', 'share', 'inr', 'usd', 'eur', 'gbp'];
+
       if (row.paidByCSV) {
         const cleanPayer = row.paidByCSV.trim();
-        const hasMember = fuzzyMapMember(cleanPayer, localRoster);
-        const hasSys = fuzzyMapSystemUser(cleanPayer, systemUsers);
-        if (!hasMember && !hasSys) {
-          unresolvedNames.add(cleanPayer);
+        if (!RESERVED_WORDS.includes(cleanPayer.toLowerCase())) {
+          const hasMember = fuzzyMapMember(cleanPayer, localRoster);
+          const hasSys = fuzzyMapSystemUser(cleanPayer, systemUsers);
+          if (!hasMember && !hasSys) {
+            unresolvedNames.add(cleanPayer);
+          }
         }
       }
 
       if (row.splitWithCSV) {
         const parts = row.splitWithCSV.split(';').map(p => p.trim()).filter(Boolean);
         parts.forEach((p) => {
-          const hasMember = fuzzyMapMember(p, localRoster);
-          const hasSys = fuzzyMapSystemUser(p, systemUsers);
-          if (!hasMember && !hasSys) {
-            unresolvedNames.add(p);
+          if (!RESERVED_WORDS.includes(p.toLowerCase())) {
+            const hasMember = fuzzyMapMember(p, localRoster);
+            const hasSys = fuzzyMapSystemUser(p, systemUsers);
+            if (!hasMember && !hasSys) {
+              unresolvedNames.add(p);
+            }
           }
         });
       }
@@ -1516,9 +1522,13 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
       }
 
       // Refetch and update local roster so we have accurate bounds
+      const selectFields = isLegacy
+        ? 'id, user_id, joined_at, User:user_id (id, name, email)'
+        : 'id, user_id, joined_at, left_at, User:user_id (id, name, email)';
+
       const { data: updatedMembersData, error: loadErr } = await supabase
         .from('GroupMember')
-        .select('id, user_id, joined_at, left_at, User:user_id (id, name, email)')
+        .select(selectFields)
         .eq('group_id', groupId);
 
       if (loadErr) throw loadErr;
@@ -1526,7 +1536,7 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
       const freshlyLoaded = (updatedMembersData || []).map((m: any) => ({
         userId: m.user_id,
         joinedAt: m.joined_at,
-        leftAt: m.left_at,
+        leftAt: isLegacy ? null : m.left_at,
         user: {
           name: m.User?.name || 'Unknown',
           email: m.User?.email || '',
