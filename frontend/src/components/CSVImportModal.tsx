@@ -829,15 +829,113 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
         {/* Separated Anomaly Alerts to Reduce Alert Fatigue */}
         <div className="space-y-3">
           {activeErrors.length > 0 && (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <span className="text-[10px] text-red-400 font-bold uppercase tracking-wider block">Critical Blockers ({activeErrors.length})</span>
-              <div className="flex flex-wrap gap-2">
-                {activeErrors.map((a, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold">
-                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{a.description}</span>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                {activeErrors.map((a, idx) => {
+                  let quickFixUI = null;
+
+                  if (a.category === 'missing_payer') {
+                    quickFixUI = (
+                      <div className="flex items-center gap-2 mt-1 pl-6">
+                        <span className="text-[9px] text-slate-400 font-bold uppercase shrink-0">Assign Payer:</span>
+                        <select
+                          onChange={(e) => {
+                            if (!e.target.value) return;
+                            handleUpdateRow(row.rowIndex, { paidByUserId: e.target.value });
+                            toast.success('Payer assigned successfully.');
+                          }}
+                          className="bg-slate-900 border border-white/10 rounded-lg px-2 py-0.5 text-[11px] text-slate-300 focus:outline-none focus:border-red-500/50"
+                          defaultValue=""
+                        >
+                          <option value="">-- Choose Member --</option>
+                          {members.map((m) => (
+                            <option key={m.id} value={m.id}>{m.name}</option>
+                          ))}
+                          {systemUsers.filter(su => !members.some(m => m.id === su.id)).map((su) => (
+                            <option key={su.id} value={su.id}>{su.name} (System User)</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  }
+
+                  if (a.category === 'percentage_total_!=_100') {
+                    quickFixUI = (
+                      <div className="mt-1 pl-6">
+                        <button
+                          onClick={() => {
+                            handleNormalizePercentages(row.rowIndex);
+                          }}
+                          className="px-2.5 py-0.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-450 text-[10px] font-bold rounded-md transition hover:cursor-pointer"
+                        >
+                          🪄 Normalize Percentages to 100%
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  if (a.category === 'missing_exchange_rate') {
+                    quickFixUI = (
+                      <div className="flex flex-wrap items-center gap-3 mt-1 pl-6">
+                        <button
+                          onClick={() => {
+                            handleUpdateRow(row.rowIndex, { exchangeRate: 1.0 });
+                            toast.success('Exchange rate set to 1.0.');
+                          }}
+                          className="px-2 py-0.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-350 text-[10px] font-bold rounded-md transition hover:cursor-pointer"
+                        >
+                          Set to 1.0 (Same Currency)
+                        </button>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] text-slate-400 font-bold uppercase">Or Enter Rate:</span>
+                          <input
+                            type="number"
+                            step="any"
+                            placeholder="e.g. 83.0"
+                            className="w-16 bg-slate-900 border border-white/10 rounded-md px-1.5 py-0.5 text-[10px] text-slate-200 focus:outline-none"
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              if (val > 0) {
+                                handleUpdateRow(row.rowIndex, { exchangeRate: val });
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (a.category === 'invalid_split_type') {
+                    quickFixUI = (
+                      <div className="flex flex-wrap items-center gap-2 mt-1 pl-6">
+                        <span className="text-[9px] text-slate-400 font-bold uppercase">Change split type to:</span>
+                        {['equal', 'unequal', 'percentage', 'share'].map((mtype) => (
+                          <button
+                            key={mtype}
+                            onClick={() => {
+                              handleUpdateRow(row.rowIndex, { splitTypeCSV: mtype });
+                              toast.success(`Split method set to ${mtype}.`);
+                            }}
+                            className="px-2 py-0.5 bg-slate-900 hover:bg-slate-800 border border-white/10 text-slate-300 text-[9px] font-bold rounded-md transition hover:cursor-pointer"
+                          >
+                            {mtype}
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={idx} className="flex flex-col bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-3 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span className="text-xs font-semibold">{a.description}</span>
+                      </div>
+                      {quickFixUI}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

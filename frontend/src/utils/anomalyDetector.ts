@@ -370,13 +370,7 @@ export function detectRowAnomalies(
 
   const convertedAmount = parsedAmount * exchangeRate;
 
-  if (currencyCSV && currencyCSV !== groupBaseCurrency.toUpperCase() && exchangeRate === 1.0) {
-    anomalies.push({
-      category: 'missing_exchange_rate',
-      severity: 'critical',
-      description: `Mixed currency transaction lacks conversion factor. Add conversion rate in the staging editor.`,
-    });
-  }
+
 
   // 5. Payer checks
   const paidByCSV = row.paid_by ? row.paid_by.trim() : '';
