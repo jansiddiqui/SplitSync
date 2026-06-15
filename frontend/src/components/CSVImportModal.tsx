@@ -2203,11 +2203,11 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
           {!loading && step === 'staging' && (
             <div className="space-y-6 flex flex-col h-full">
               {/* Workspace Action Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-4 bg-obsidian-card-elevated border border-white/5 p-4 rounded-2xl shrink-0">
-                <div className="flex gap-2">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-obsidian-card-elevated border border-white/5 p-4 rounded-2xl shrink-0">
+                <div className="flex gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-1 md:pb-0 snap-x">
                   <button
                     onClick={() => setActiveFilter('all')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition hover:cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition hover:cursor-pointer shrink-0 snap-align-start ${
                       activeFilter === 'all' ? 'bg-primary text-obsidian' : 'bg-white/5 text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -2215,7 +2215,7 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                   </button>
                   <button
                     onClick={() => setActiveFilter('errors')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition hover:cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition hover:cursor-pointer shrink-0 snap-align-start ${
                       activeFilter === 'errors'
                         ? 'bg-amber-500 text-obsidian'
                         : 'bg-white/5 text-slate-400 hover:text-slate-200'
@@ -2225,7 +2225,7 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                   </button>
                   <button
                     onClick={() => setActiveFilter('clean')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition hover:cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition hover:cursor-pointer shrink-0 snap-align-start ${
                       activeFilter === 'clean'
                         ? 'bg-emerald-500 text-obsidian'
                         : 'bg-white/5 text-slate-400 hover:text-slate-200'
@@ -2235,36 +2235,36 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                   </button>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-1 md:pb-0 snap-x">
                   <button
                     onClick={handleFuzzyMapAll}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 border border-white/5 text-slate-200 hover:bg-white/10 transition hover:cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 border border-white/5 text-slate-200 hover:bg-white/10 transition hover:cursor-pointer flex items-center gap-1.5 shrink-0 snap-align-start"
                   >
                     <RefreshCw className="w-3.5 h-3.5" /> Auto Map Names
                   </button>
                   <button
                     onClick={handleResolveAllUnknownUsers}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition hover:cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition hover:cursor-pointer flex items-center gap-1.5 shrink-0 snap-align-start"
                     title="Resolve all unregistered names by scheduling user creation on import commit"
                   >
                     <UserPlus className="w-3.5 h-3.5" /> Create All Users
                   </button>
                   <button
                     onClick={handleResolveAllJoinDates}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition hover:cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition hover:cursor-pointer flex items-center gap-1.5 shrink-0 snap-align-start"
                     title="Automatically backdate group roster join dates for members who have historical expenses"
                   >
                     <Calendar className="w-3.5 h-3.5" /> Resolve Join Dates
                   </button>
                   <button
                     onClick={handleNormalizeAllPercentages}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 border border-white/5 text-slate-200 hover:bg-white/10 transition hover:cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 border border-white/5 text-slate-200 hover:bg-white/10 transition hover:cursor-pointer flex items-center gap-1.5 shrink-0 snap-align-start"
                   >
                     <Check className="w-3.5 h-3.5" /> Normalize Ratios
                   </button>
                   <button
                     onClick={handleRemoveAllCriticalErrors}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition hover:cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition hover:cursor-pointer flex items-center gap-1.5 shrink-0 snap-align-start"
                   >
                     <Trash2 className="w-3.5 h-3.5" /> Discard Errors
                   </button>
@@ -2274,18 +2274,18 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
               {/* Grid Layout: Left 3 columns table, Right 1 column audit breakdown */}
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
                 {/* Rows List (Col span 3) */}
-                <div className="lg:col-span-3 border border-white/5 rounded-2xl overflow-hidden bg-slate-950/20 max-h-[50vh] overflow-y-auto">
+                <div className="lg:col-span-3 border border-white/5 rounded-2xl bg-slate-950/20 max-h-[50vh] overflow-auto no-scrollbar">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-obsidian-card-elevated border-b border-white/5 text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
-                        <th className="px-4 py-3">Row</th>
-                        <th className="px-4 py-3">Date</th>
-                        <th className="px-4 py-3">Description</th>
-                        <th className="px-4 py-3">Payer</th>
-                        <th className="px-4 py-3">Amount</th>
-                        <th className="px-4 py-3">Type</th>
-                        <th className="px-4 py-3">Split Info</th>
-                        <th className="px-4 py-3 text-right">Status</th>
+                        <th className="px-4 py-3 whitespace-nowrap">Row</th>
+                        <th className="px-4 py-3 whitespace-nowrap">Date</th>
+                        <th className="px-4 py-3 whitespace-nowrap">Description</th>
+                        <th className="px-4 py-3 whitespace-nowrap">Payer</th>
+                        <th className="px-4 py-3 whitespace-nowrap">Amount</th>
+                        <th className="px-4 py-3 whitespace-nowrap">Type</th>
+                        <th className="px-4 py-3 whitespace-nowrap">Split Info</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2328,28 +2328,28 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                                 isSelected ? 'bg-primary/5 hover:bg-primary/5' : 'hover:bg-white/3'
                               } ${row.isDeleted ? 'opacity-40 line-through' : ''}`}
                             >
-                              <td className="px-4 py-3 text-slate-500 font-bold">#{row.rowIndex + 1}</td>
-                              <td className="px-4 py-3 text-slate-300">
+                              <td className="px-4 py-3 text-slate-500 font-bold whitespace-nowrap">#{row.rowIndex + 1}</td>
+                              <td className="px-4 py-3 text-slate-300 whitespace-nowrap">
                                 {row.parsedDate ? row.parsedDate.split('T')[0] : row.dateStr}
                               </td>
-                              <td className="px-4 py-3 font-semibold text-slate-200 max-w-[180px] truncate">
+                              <td className="px-4 py-3 font-semibold text-slate-200 max-w-[180px] truncate whitespace-nowrap">
                                 {row.description}
                               </td>
-                              <td className="px-4 py-3 text-slate-300">
+                              <td className="px-4 py-3 text-slate-300 whitespace-nowrap">
                                 {row.paidByUserId ? (localRoster.find((m) => m.userId === row.paidByUserId)?.user.name || (row.paidByUserId.startsWith('pending-') ? row.paidByUserId.replace('pending-', '') : row.paidByCSV)) : row.paidByCSV}
                               </td>
-                              <td className="px-4 py-3 font-bold text-slate-200">
+                              <td className="px-4 py-3 font-bold text-slate-200 whitespace-nowrap">
                                 {row.currencyCSV || baseCurrency} {row.parsedAmount}
                                 {row.currencyCSV && row.currencyCSV !== baseCurrency && (
-                                  <span className="text-[10px] text-slate-400 font-normal block leading-tight">
+                                  <span className="text-[10px] text-slate-400 font-normal block leading-tight whitespace-nowrap">
                                     ₹{(row.parsedAmount * row.exchangeRate).toFixed(2)} Base
                                   </span>
                                 )}
                               </td>
-                              <td className="px-4 py-3 text-slate-400 uppercase font-outfit text-[10px]">
+                              <td className="px-4 py-3 text-slate-400 uppercase font-outfit text-[10px] whitespace-nowrap">
                                 {row.isSettlement ? 'Settlement' : 'Expense'}
                               </td>
-                              <td className="px-4 py-3 text-slate-400 text-[11px] truncate max-w-[200px]">
+                              <td className="px-4 py-3 text-slate-400 text-[11px] truncate max-w-[200px] whitespace-nowrap">
                                 {!row.isSettlement ? (
                                   <>
                                     <span className="capitalize">{row.splitTypeCSV}</span> • {row.splitWithCSV}
@@ -2358,7 +2358,7 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                                   `Repays: ${row.splitWithCSV}`
                                 )}
                               </td>
-                              <td className="px-4 py-3 text-right">{statusBadge}</td>
+                              <td className="px-4 py-3 text-right whitespace-nowrap">{statusBadge}</td>
                             </tr>
                             {isSelected && (
                               <tr>
@@ -2466,8 +2466,8 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
               </div>
 
               {/* Commit Footer */}
-              <div className="flex justify-between items-center bg-obsidian-card-elevated border border-white/5 p-4 rounded-2xl shrink-0 mt-auto">
-                <div className="text-xs text-slate-400">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-obsidian-card-elevated border border-white/5 p-4 rounded-2xl shrink-0 mt-auto">
+                <div className="text-xs text-slate-400 text-center sm:text-left">
                   <span className="font-bold text-slate-200">
                     {stagingRows.filter((r) => !r.isDeleted).length} / {stagingRows.length}
                   </span>{' '}
@@ -2482,10 +2482,10 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                   critical blockers
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 w-full sm:w-auto">
                   <button
                     onClick={() => setStep('mapping')}
-                    className="px-4 py-2 rounded-xl text-xs font-extrabold text-slate-400 hover:text-slate-200 bg-white/5 border border-white/5 transition hover:cursor-pointer"
+                    className="flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-extrabold text-slate-400 hover:text-slate-200 bg-white/5 border border-white/5 transition hover:cursor-pointer text-center"
                     disabled={submitting}
                   >
                     Back to Mapping
@@ -2496,7 +2496,7 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                       submitting ||
                       stagingRows.filter((r) => !r.isDeleted && r.anomalies.some((a) => a.severity === 'critical')).length > 0
                     }
-                    className="px-4 py-2 rounded-xl text-xs font-extrabold bg-primary text-obsidian hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100 transition hover:cursor-pointer flex items-center gap-1.5 shadow-lg shadow-primary/20"
+                    className="flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-extrabold bg-primary text-obsidian hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100 transition hover:cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-primary/20"
                   >
                     {submitting ? 'Writing Ledger...' : 'Commit Import'} <ArrowRight className="w-4 h-4" />
                   </button>
