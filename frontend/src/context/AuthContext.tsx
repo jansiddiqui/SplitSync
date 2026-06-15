@@ -96,6 +96,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.warn('Settlement receiver migration warning:', e);
           }
 
+          try {
+            await supabase
+              .from('UnregisteredMember')
+              .update({ status: 'joined', placeholder_user_id: userId })
+              .eq('placeholder_user_id', oldId);
+          } catch (e) {
+            console.warn('UnregisteredMember migration warning:', e);
+          }
+
           // Update the User profile ID itself to match the auth account userId
           const { data: mergedProfile, error: mergeErr } = await supabase
             .from('User')

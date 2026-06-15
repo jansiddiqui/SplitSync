@@ -284,6 +284,16 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
   const [filteredFriends, setFilteredFriends] = useState<UserInfo[]>([]);
   const [showFriendsDropdown, setShowFriendsDropdown] = useState(false);
 
+  // Unregistered members (imported via CSV, awaiting real signup)
+  const [unregisteredMembers, setUnregisteredMembers] = useState<{
+    id: string;
+    display_name: string;
+    placeholder_user_id: string | null;
+    real_email: string | null;
+    status: string;
+    created_at: string;
+  }[]>([]);
+
   // Modals state
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showSettlementModal, setShowSettlementModal] = useState(false);
@@ -356,6 +366,74 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
       }
     } catch (err) {
       console.error('Error fetching friends network:', err);
+    }
+  };
+
+  const loadUnregisteredMembers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('UnregisteredMember')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        if (error.message?.includes('does not exist') || error.code === 'PGRST205') {
+          setUnregisteredMembers([]);
+        } else {
+          console.warn('Failed to load unregistered members:', error);
+        }
+        return;
+      }
+
+      setUnregisteredMembers(data || []);
+    } catch (err) {
+      console.warn('Failed to load unregistered members:', err);
+    }
+  };
+
+  const handleSendInviteToUnregistered = async (unreg: any) => {
+    let email = unreg.real_email;
+    if (!email) {
+      const inputEmail = prompt(`Enter the email address for ${unreg.display_name} to send an invite:`);
+      if (!inputEmail) return;
+      const cleanEmail = inputEmail.trim().toLowerCase();
+      if (!cleanEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        toast.error('Please enter a valid email address.');
+        return;
+      }
+      email = cleanEmail;
+    }
+
+    try {
+      if (unreg.placeholder_user_id) {
+        const { error: userErr } = await supabase
+          .from('User')
+          .update({ email: email })
+          .eq('id', unreg.placeholder_user_id);
+        if (userErr) throw userErr;
+      }
+
+      const { error: unregErr } = await supabase
+        .from('UnregisteredMember')
+        .update({
+          real_email: email,
+          status: 'invited',
+          invite_sent_at: new Date().toISOString(),
+        })
+        .eq('id', unreg.id);
+      if (unregErr) throw unregErr;
+
+      const inviteCode = group?.name?.match(/ \[invite:([A-Z0-9]+)\]/)?.[1] || groupId;
+      const inviteLink = `${window.location.origin}?join=${inviteCode}`;
+
+      await navigator.clipboard.writeText(inviteLink);
+
+      toast.success(`Invite details saved for ${unreg.display_name}! Invite link copied to clipboard.`);
+      loadGroupData();
+    } catch (err: any) {
+      console.error('Failed to send invite to unregistered member:', err);
+      toast.error(err.message || 'Failed to send invite.');
     }
   };
 
@@ -652,6 +730,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
         // sync offline queue in the background
         syncOfflineQueue();
       }
+
+      // 7. Fetch unregistered members
+      await loadUnregisteredMembers();
 
     } catch (err: any) {
       setError(err.message || 'Failed to load experience details.');
@@ -1071,39 +1152,17 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
   };
 
   const handleInviteAndMerge = async (member: GroupMember) => {
-    const realEmail = prompt(`Enter the real email address for ${member.user.name} to send an invite link:`);
-    if (!realEmail) return;
-    const cleanEmail = realEmail.trim().toLowerCase();
-    
-    // Quick validation
-    if (!cleanEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      toast.error('Please enter a valid email address.');
-      return;
-    }
-
     try {
-      // 1. Update user email in database
-      const { error: updErr } = await supabase
-        .from('User')
-        .update({ email: cleanEmail })
-        .eq('id', member.userId);
-
-      if (updErr) throw updErr;
-
-      // 2. Generate invite link
+      // Generate invite link and copy directly to clipboard
       const inviteCode = group?.name?.match(/ \[invite:([A-Z0-9]+)\]/)?.[1] || groupId;
       const inviteLink = `${window.location.origin}?join=${inviteCode}`;
 
-      // 3. Copy to clipboard
       await navigator.clipboard.writeText(inviteLink);
 
-      toast.success(`Profile updated to ${cleanEmail}! Direct invite link copied to clipboard.`);
-      
-      // 4. Refresh data
-      loadGroupData();
+      toast.success(`Invite link for ${member.user.name} copied! Share it with them to join the group.`);
     } catch (err: any) {
-      console.error('Failed to update placeholder email:', err);
-      toast.error(err.message || 'Failed to update placeholder email.');
+      console.error('Failed to copy invite link:', err);
+      toast.error('Could not copy invite link. Please try again.');
     }
   };
 
@@ -2449,10 +2508,11 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
                       {isImported && (
                         <button
                           onClick={() => handleInviteAndMerge(member)}
-                          className="p-1 text-amber-400 hover:text-amber-300 transition hover:cursor-pointer rounded hover:bg-amber-500/5 border border-transparent hover:border-amber-500/10"
-                          title="Invite & Merge real email"
+                          className="flex items-center gap-1 px-2 py-1 text-amber-400 hover:text-amber-300 transition hover:cursor-pointer rounded-lg bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/15 hover:border-amber-500/30 text-[9px] font-bold"
+                          title={`Copy invite link for ${member.user.name}`}
                         >
-                          <UserPlus className="w-3.5 h-3.5" />
+                          <UserPlus className="w-3 h-3 shrink-0" />
+                          <span className="hidden sm:inline">Send Invite</span>
                         </button>
                       )}
                       {isCreator && member.userId !== user?.id && !member.leftAt && (
@@ -2470,6 +2530,44 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({ groupId, onBack }) => 
                 );
               })}
             </div>
+
+            {/* Pending CSV Invites */}
+            {unregisteredMembers.length > 0 && (
+              <div className="pt-4 border-t border-white/5 space-y-3">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                  <UserPlus className="w-3.5 h-3.5 text-amber-400" />
+                  Pending CSV Invites
+                </p>
+                <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
+                  {unregisteredMembers.map((unreg) => (
+                    <div key={unreg.id} className="flex justify-between items-center bg-white/2 rounded-lg p-2 border border-white/5">
+                      <div>
+                        <p className="text-xs font-bold text-slate-200">
+                          {unreg.display_name}
+                        </p>
+                        {unreg.real_email ? (
+                          <p className="text-[9px] text-slate-400 font-mono">
+                            {unreg.real_email}
+                          </p>
+                        ) : (
+                          <p className="text-[9px] text-amber-500/80 italic">
+                            Awaiting email invite
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleSendInviteToUnregistered(unreg)}
+                        className="flex items-center gap-1 px-2 py-1 text-amber-400 hover:text-amber-300 transition hover:cursor-pointer rounded-lg bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/15 hover:border-amber-500/30 text-[9px] font-bold"
+                        title={`Send invite to ${unreg.display_name}`}
+                      >
+                        <UserPlus className="w-3 h-3 shrink-0" />
+                        <span>{unreg.real_email ? 'Resend' : 'Invite'}</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Invite Form */}
             <form onSubmit={handleInvite} className="pt-4 border-t border-white/5 space-y-3 relative" id="form-invite-member">

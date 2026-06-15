@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../utils/supabase';
+import { supabase, checkIsLegacySchema } from '../utils/supabase';
 import { useAuth } from '../context/AuthContext';
 import { parseCSV, RawCSVRow } from '../utils/csvParser';
 import { detectRowAnomalies, StagingExpense, fuzzyMapMember, parseCSVDate, fuzzyMapSystemUser, getAnomalyGroup } from '../utils/anomalyDetector';
-import { X, Upload, Check, AlertTriangle, RefreshCw, Trash2, ArrowRight, Settings, Info } from 'lucide-react';
+import { X, Upload, Check, AlertTriangle, RefreshCw, Trash2, ArrowRight, Settings, Info, UserPlus } from 'lucide-react';
 import { useToast } from './Toast';
 
 interface Member {
@@ -87,30 +87,35 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
     };
   }>({});
   const [showDryRun, setShowDryRun] = useState(false);
+  const [isLegacy, setIsLegacy] = useState(false);
 
   // Fetch group data and system users on load
   useEffect(() => {
     const fetchExistingData = async () => {
       try {
-        const { data: exExp, error: exErr } = await supabase
+        const legacy = await checkIsLegacySchema();
+        setIsLegacy(legacy);
+
+        let query = supabase
           .from('Expense')
           .select('title, amount, paid_by, created_at')
-          .eq('group_id', groupId)
-          .is('deleted_at', null);
+          .eq('group_id', groupId);
 
-        if (exErr) {
-          if (exErr.message.includes('deleted_at') || exErr.code === 'PGRST100') {
-            const { data: legacyEx, error: legacyErr } = await supabase
-              .from('Expense')
-              .select('title, amount, paid_by, created_at')
-              .eq('group_id', groupId);
-            if (legacyErr) throw legacyErr;
-            setExistingExpenses((legacyEx || []).filter((e: any) => !e.title.includes('[deleted:')));
-          } else {
-            throw exErr;
-          }
+        if (!legacy) {
+          query = query.is('deleted_at', null);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          // Fallback check just in case
+          const { data: fallbackData, error: fallbackErr } = await supabase
+            .from('Expense')
+            .select('title, amount, paid_by, created_at')
+            .eq('group_id', groupId);
+          if (fallbackErr) throw fallbackErr;
+          setExistingExpenses((fallbackData || []).filter((e: any) => !e.title.includes('[deleted:')));
         } else {
-          setExistingExpenses(exExp || []);
+          setExistingExpenses(data || []);
         }
       } catch (e) {
         console.error('Failed to load existing expenses for duplicate check:', e);
@@ -720,6 +725,36 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
     toast.warning('All rows with unresolved critical errors marked as discarded.');
   };
 
+  const handleResolveAllUnknownUsers = () => {
+    const names = new Set<string>();
+    stagingRows.forEach((row) => {
+      if (row.isDeleted) return;
+      row.anomalies.forEach((a) => {
+        if (a.category === 'unknown_participant' && a.meta?.unknownName) {
+          names.add(a.meta.unknownName);
+        }
+      });
+    });
+
+    const unknownList = Array.from(names);
+    if (unknownList.length === 0) {
+      toast.info('No unregistered names found to resolve.');
+      return;
+    }
+
+    const updates: { [name: string]: { joinDateType: 'first_expense' | 'group_start' | 'custom' } } = {};
+    unknownList.forEach((name) => {
+      updates[name] = { joinDateType: 'first_expense' };
+    });
+
+    setPendingUsersToCreate((prev) => ({
+      ...prev,
+      ...updates,
+    }));
+
+    toast.success(`Successfully marked ${unknownList.length} unregistered users for creation.`);
+  };
+
   // Row expansion editor panel details
   const renderRowEditor = (row: StagingExpense, index: number) => {
     const activeErrors = row.anomalies.filter((a) => a.severity === 'critical');
@@ -1222,9 +1257,11 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
         if (existingUser) {
           realUserId = existingUser.id;
         } else {
+          const randomId = crypto.randomUUID();
           const { data: newUser, error: uErr } = await supabase
             .from('User')
             .insert({
+              id: randomId,
               name,
               email: placeholderEmail,
             })
@@ -1252,6 +1289,29 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
 
         if (joinErr && !joinErr.message.includes('duplicate key')) {
           throw joinErr;
+        }
+
+        // Track in UnregisteredMember table for invite workflow
+        try {
+          const { data: existingUnreg } = await supabase
+            .from('UnregisteredMember')
+            .select('id')
+            .eq('group_id', groupId)
+            .eq('placeholder_user_id', realUserId)
+            .maybeSingle();
+
+          if (!existingUnreg) {
+            await supabase.from('UnregisteredMember').insert({
+              group_id: groupId,
+              display_name: name,
+              placeholder_user_id: realUserId,
+              invited_by: user?.id,
+              status: 'pending',
+            });
+          }
+        } catch (unregErr) {
+          // Table may not exist yet — silently continue
+          console.warn('UnregisteredMember insert skipped (table may not exist):', unregErr);
         }
       }
 
@@ -1389,15 +1449,20 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
             recipientId = nameToRealIdMap[name.toLowerCase()] || freshlyLoaded[0]?.userId;
           }
 
-          const { error: sErr } = await supabase.from('Settlement').insert({
+          const settlementPayload: any = {
             group_id: groupId,
             payer_id: paidByUserId,
             receiver_id: recipientId,
             amount: rawAmt,
-            currency_code: row.currencyCSV || baseCurrency,
-            exchange_rate: rate,
             created_at: dateObj.toISOString(),
-          });
+          };
+
+          if (!isLegacy) {
+            settlementPayload.currency_code = row.currencyCSV || baseCurrency;
+            settlementPayload.exchange_rate = rate;
+          }
+
+          const { error: sErr } = await supabase.from('Settlement').insert(settlementPayload);
 
           if (sErr) throw sErr;
           importedCount++;
@@ -1530,43 +1595,46 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
           }
 
           let rpcSuccess = false;
-          try {
-            const { error: rpcErr } = await supabase
-              .rpc('create_expense_with_splits', {
-                p_group_id: groupId,
-                p_title: row.description,
-                p_description: row.notesCSV || null,
-                p_amount: rawAmt,
-                p_paid_by: paidByUserId,
-                p_currency_code: row.currencyCSV || baseCurrency,
-                p_exchange_rate: rate,
-                p_splits: splitsPayload,
-              });
+          if (!isLegacy) {
+            try {
+              const { error: rpcErr } = await supabase
+                .rpc('create_expense_with_splits', {
+                  p_group_id: groupId,
+                  p_title: row.description,
+                  p_description: row.notesCSV || null,
+                  p_amount: rawAmt,
+                  p_paid_by: paidByUserId,
+                  p_currency_code: row.currencyCSV || baseCurrency,
+                  p_exchange_rate: rate,
+                  p_splits: splitsPayload,
+                });
 
-            if (!rpcErr) {
-              rpcSuccess = true;
-            } else if (rpcErr.code !== 'PGRST202' && !rpcErr.message.includes('does not exist')) {
-              throw rpcErr;
-            }
-          } catch (err: any) {
-            if (!err.message?.includes('does not exist') && err.code !== 'PGRST202') {
-              throw err;
+              if (!rpcErr) {
+                rpcSuccess = true;
+              }
+            } catch (err: any) {
+              // Ignore and fall back to standard inserts
             }
           }
 
           if (!rpcSuccess) {
+            const expenseInsertPayload: any = {
+              group_id: groupId,
+              paid_by: paidByUserId,
+              amount: rawAmt,
+              title: row.description,
+              description: row.notesCSV || null,
+              created_at: dateObj.toISOString(),
+            };
+
+            if (!isLegacy) {
+              expenseInsertPayload.currency_code = row.currencyCSV || baseCurrency;
+              expenseInsertPayload.exchange_rate = rate;
+            }
+
             const { data: exp, error: exErr } = await supabase
               .from('Expense')
-              .insert({
-                group_id: groupId,
-                paid_by: paidByUserId,
-                amount: rawAmt,
-                title: row.description,
-                description: row.notesCSV || null,
-                currency_code: row.currencyCSV || baseCurrency,
-                exchange_rate: rate,
-                created_at: dateObj.toISOString(),
-              })
+              .insert(expenseInsertPayload)
               .select()
               .single();
 
@@ -1808,6 +1876,13 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                     <RefreshCw className="w-3.5 h-3.5" /> Auto Map Names
                   </button>
                   <button
+                    onClick={handleResolveAllUnknownUsers}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition hover:cursor-pointer flex items-center gap-1.5"
+                    title="Resolve all unregistered names by scheduling user creation on import commit"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" /> Create All Users
+                  </button>
+                  <button
                     onClick={handleNormalizeAllPercentages}
                     className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 border border-white/5 text-slate-200 hover:bg-white/10 transition hover:cursor-pointer flex items-center gap-1.5"
                   >
@@ -2026,7 +2101,7 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                   <span className="font-bold text-amber-400">
                     {stagingRows.filter((r) => !r.isDeleted && r.anomalies.length > 0).length}
                   </span>{' '}
-                  with warnings • my{' '}
+                  with warnings •{' '}
                   <span className="font-bold text-red-400">
                     {stagingRows.filter((r) => !r.isDeleted && r.anomalies.some((a) => a.severity === 'critical')).length}
                   </span>{' '}
