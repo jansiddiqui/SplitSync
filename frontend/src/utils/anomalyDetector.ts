@@ -8,6 +8,8 @@ export interface Anomaly {
     duplicateRowIndex?: number;
     duplicateType?: 'database' | 'batch';
     unknownName?: string;
+    userId?: string;
+    earliestDate?: string;
   };
 }
 
@@ -555,6 +557,11 @@ export function detectRowAnomalies(
             category: 'expense_before_member_joined',
             severity: 'critical',
             description: `Payer "${paidByCSV}" had not joined the group yet on the expense date (${row.date}).`,
+            meta: {
+              userId: paidByUserId,
+              unknownName: paidByCSV,
+              earliestDate: parsedDate || undefined,
+            }
           });
         }
         if (leftTime && expTime > leftTime) {
@@ -580,6 +587,11 @@ export function detectRowAnomalies(
             category: 'expense_before_member_joined',
             severity: 'critical',
             description: `Participant "${memberName(uid)}" had not joined yet on the expense date (${row.date}).`,
+            meta: {
+              userId: uid,
+              unknownName: memberName(uid),
+              earliestDate: parsedDate || undefined,
+            }
           });
         }
         if (leftTime && expTime > leftTime) {

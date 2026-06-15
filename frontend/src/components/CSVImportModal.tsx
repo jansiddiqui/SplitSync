@@ -3,7 +3,7 @@ import { supabase, checkIsLegacySchema } from '../utils/supabase';
 import { useAuth } from '../context/AuthContext';
 import { parseCSV, RawCSVRow } from '../utils/csvParser';
 import { detectRowAnomalies, StagingExpense, fuzzyMapMember, parseCSVDate, fuzzyMapSystemUser, getAnomalyGroup } from '../utils/anomalyDetector';
-import { X, Upload, Check, AlertTriangle, RefreshCw, Trash2, ArrowRight, Settings, Info, UserPlus } from 'lucide-react';
+import { X, Upload, Check, AlertTriangle, RefreshCw, Trash2, ArrowRight, Settings, Info, UserPlus, Calendar } from 'lucide-react';
 import { useToast } from './Toast';
 
 interface Member {
@@ -761,6 +761,43 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
     toast.success(`Successfully marked ${unknownList.length} unregistered users for creation.`);
   };
 
+  const handleResolveAllJoinDates = () => {
+    const userEarliestDates: { [userId: string]: string } = {};
+
+    stagingRows.forEach((row) => {
+      if (row.isDeleted) return;
+      row.anomalies.forEach((a) => {
+        if (a.category === 'expense_before_member_joined' && a.meta?.userId && a.meta?.earliestDate) {
+          const uid = a.meta.userId;
+          const ed = a.meta.earliestDate;
+          if (!userEarliestDates[uid] || new Date(ed).getTime() < new Date(userEarliestDates[uid]).getTime()) {
+            userEarliestDates[uid] = ed;
+          }
+        }
+      });
+    });
+
+    const userIds = Object.keys(userEarliestDates);
+    if (userIds.length === 0) {
+      toast.info('No roster join date discrepancies found.');
+      return;
+    }
+
+    setLocalRoster((prev) =>
+      prev.map((m) => {
+        const earliest = userEarliestDates[m.userId];
+        if (earliest) {
+          if (m.joinedAt && new Date(earliest).getTime() < new Date(m.joinedAt).getTime()) {
+            return { ...m, joinedAt: earliest };
+          }
+        }
+        return m;
+      })
+    );
+
+    toast.success(`Successfully backdated join dates for ${userIds.length} members.`);
+  };
+
   // Row expansion editor panel details
   const renderRowEditor = (row: StagingExpense, index: number) => {
     const activeErrors = row.anomalies.filter((a) => a.severity === 'critical');
@@ -928,6 +965,32 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                             {mtype}
                           </button>
                         ))}
+                      </div>
+                    );
+                  }
+
+                  if (a.category === 'expense_before_member_joined' && a.meta?.userId && a.meta?.earliestDate) {
+                    const targetUserId = a.meta.userId;
+                    const earliestDate = a.meta.earliestDate;
+                    const userName = a.meta.unknownName || 'Member';
+                    quickFixUI = (
+                      <div className="mt-1 pl-6">
+                        <button
+                          onClick={() => {
+                            setLocalRoster((prev) =>
+                              prev.map((m) => {
+                                if (m.userId === targetUserId) {
+                                  return { ...m, joinedAt: earliestDate };
+                                }
+                                return m;
+                              })
+                            );
+                            toast.success(`Backdated ${userName}'s join date to ${earliestDate.split('T')[0]}.`);
+                          }}
+                          className="px-2.5 py-0.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-450 text-[10px] font-bold rounded-md transition hover:cursor-pointer"
+                        >
+                          🪄 Backdate {userName}'s Roster Join Date to {earliestDate.split('T')[0]}
+                        </button>
                       </div>
                     );
                   }
@@ -1405,6 +1468,22 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
     setShowDryRun(false);
 
     try {
+      // 0. Update any existing member joined_at dates in the database if they were modified/backdated
+      for (const member of localRoster) {
+        const initial = initialRosterMembers.find((m) => m.userId === member.userId);
+        if (initial && member.joinedAt && initial.joinedAt && new Date(member.joinedAt).getTime() < new Date(initial.joinedAt).getTime()) {
+          const { error: updateErr } = await supabase
+            .from('GroupMember')
+            .update({ joined_at: member.joinedAt })
+            .eq('group_id', groupId)
+            .eq('user_id', member.userId);
+          
+          if (updateErr) {
+            console.warn(`Failed to update joined_at for ${member.user.name}:`, updateErr);
+          }
+        }
+      }
+
       // 1. Database-Safe: Create pending users and roster links explicitly on commit
       const nameToRealIdMap: { [name: string]: string } = {};
       const pendingNames = Object.keys(pendingUsersToCreate);
@@ -2053,6 +2132,13 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                     title="Resolve all unregistered names by scheduling user creation on import commit"
                   >
                     <UserPlus className="w-3.5 h-3.5" /> Create All Users
+                  </button>
+                  <button
+                    onClick={handleResolveAllJoinDates}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition hover:cursor-pointer flex items-center gap-1.5"
+                    title="Automatically backdate group roster join dates for members who have historical expenses"
+                  >
+                    <Calendar className="w-3.5 h-3.5" /> Resolve Join Dates
                   </button>
                   <button
                     onClick={handleNormalizeAllPercentages}

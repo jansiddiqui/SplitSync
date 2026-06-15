@@ -29,9 +29,10 @@ export async function checkIsLegacySchema(): Promise<boolean> {
       if (res.ok) {
         const data = await res.json();
         const schemaStr = JSON.stringify(data);
-        // If the OpenAPI schema contains "base_currency", we are on the new schema
+        // If the OpenAPI schema lacks "base_currency" or does not contain "currency_code" under Settlement, it's legacy
         const hasBaseCurrency = schemaStr.includes('"base_currency"');
-        isLegacyCached = !hasBaseCurrency;
+        const hasSettleCurrency = schemaStr.includes('"/Settlement"') && schemaStr.includes('"currency_code"');
+        isLegacyCached = !hasBaseCurrency || !hasSettleCurrency;
         return isLegacyCached;
       }
     } catch (e) {
@@ -40,17 +41,21 @@ export async function checkIsLegacySchema(): Promise<boolean> {
 
     // 2. Fallback to query check if OpenAPI fetch was not successful or threw an error
     try {
-      const { error } = await supabase
+      const { error: groupErr } = await supabase
         .from('Group')
         .select('base_currency')
         .limit(1);
 
-      if (error && (error.code === '42703' || error.message.includes('base_currency') || error.code === 'PGRST100')) {
-        isLegacyCached = true;
-        return true;
-      }
-      isLegacyCached = false;
-      return false;
+      const { error: settleErr } = await supabase
+        .from('Settlement')
+        .select('currency_code')
+        .limit(1);
+
+      const isGroupLegacy = groupErr && (groupErr.code === '42703' || groupErr.message.includes('base_currency') || groupErr.code === 'PGRST100');
+      const isSettleLegacy = settleErr && (settleErr.code === '42703' || settleErr.message.includes('currency_code') || settleErr.code === 'PGRST100');
+
+      isLegacyCached = !!(isGroupLegacy || isSettleLegacy);
+      return isLegacyCached;
     } catch (e) {
       isLegacyCached = true;
       return true;

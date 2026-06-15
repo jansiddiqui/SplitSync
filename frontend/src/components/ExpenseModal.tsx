@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../utils/supabase';
+import { supabase, checkIsLegacySchema } from '../utils/supabase';
 import { useAuth } from '../context/AuthContext';
 import { X, Calculator } from 'lucide-react';
 import { useToast } from './Toast';
@@ -385,18 +385,24 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ groupId, members, ex
       }
 
       if (!rpcSuccess) {
+        const isLegacy = await checkIsLegacySchema();
+        const insertPayload: any = {
+          group_id: groupId,
+          title: finalTitle,
+          description: description.trim() || null,
+          amount: parsedAmount,
+          paid_by: paidBy,
+          created_at: new Date(createdAt).toISOString(),
+        };
+
+        if (!isLegacy) {
+          insertPayload.currency_code = currencyCode;
+          insertPayload.exchange_rate = parseFloat(exchangeRate) || 1.0;
+        }
+
         const { data: newExp, error: eErr } = await supabase
           .from('Expense')
-          .insert({
-            group_id: groupId,
-            title: finalTitle,
-            description: description.trim() || null,
-            amount: parsedAmount,
-            paid_by: paidBy,
-            created_at: new Date(createdAt).toISOString(),
-            currency_code: currencyCode,
-            exchange_rate: parseFloat(exchangeRate) || 1.0,
-          })
+          .insert(insertPayload)
           .select()
           .single();
 

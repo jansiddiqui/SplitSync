@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../utils/supabase';
+import { supabase, checkIsLegacySchema } from '../utils/supabase';
 import { useAuth } from '../context/AuthContext';
 import { X, CreditCard } from 'lucide-react';
 import { useToast } from './Toast';
@@ -120,17 +120,23 @@ export const SettlementModal: React.FC<SettlementModalProps> = ({ groupId, membe
       }
 
       // 1. Record the settlement/resolution
+      const isLegacy = await checkIsLegacySchema();
+      const insertPayload: any = {
+        group_id: groupId,
+        payer_id: payerId,
+        receiver_id: receiverId,
+        amount: parsedAmount,
+        created_at: new Date(createdAt).toISOString(),
+      };
+
+      if (!isLegacy) {
+        insertPayload.currency_code = currencyCode;
+        insertPayload.exchange_rate = parseFloat(exchangeRate) || 1.0;
+      }
+
       const { error: sErr } = await supabase
         .from('Settlement')
-        .insert({
-          group_id: groupId,
-          payer_id: payerId,
-          receiver_id: receiverId,
-          amount: parsedAmount,
-          created_at: new Date(createdAt).toISOString(),
-          currency_code: currencyCode,
-          exchange_rate: parseFloat(exchangeRate) || 1.0,
-        });
+        .insert(insertPayload);
 
       if (sErr) throw new Error(sErr.message);
 
