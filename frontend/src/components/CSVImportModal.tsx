@@ -774,6 +774,39 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
       (a) => a.category === 'duplicate_expense' && a.meta?.duplicateType === 'batch'
     );
 
+    // Extract ambiguous date information
+    const ambiguousDateAnomaly = row.anomalies.find(
+      (a) => a.category === 'ambiguous_date_format'
+    );
+
+    let dateOptions: { date: Date; label: string; format: string }[] = [];
+    if (ambiguousDateAnomaly) {
+      const dateParts = row.dateStr.split(/[-/.]/);
+      if (dateParts.length === 3) {
+        const p1 = parseInt(dateParts[0], 10);
+        const p2 = parseInt(dateParts[1], 10);
+        const p3 = parseInt(dateParts[2], 10);
+        let year = p3 >= 1000 ? p3 : (p3 < 100 ? 2000 + p3 : p3);
+
+        if (p1 <= 12 && p2 <= 12 && p1 !== p2) {
+          const d1 = new Date(year, p2 - 1, p1);
+          const d2 = new Date(year, p1 - 1, p2);
+          dateOptions = [
+            {
+              date: d1,
+              label: d1.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }),
+              format: 'DD/MM'
+            },
+            {
+              date: d2,
+              label: d2.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }),
+              format: 'MM/DD'
+            }
+          ];
+        }
+      }
+    }
+
     return (
       <div className="bg-obsidian-card-elevated border-t border-white/5 p-5 text-slate-200 animate-in slide-in-from-top-4 duration-150 rounded-b-xl space-y-5">
         <div className="flex justify-between items-center pb-3 border-b border-white/5">
@@ -1002,6 +1035,37 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* 3. Ambiguous Date Resolution Workflow */}
+        {ambiguousDateAnomaly && dateOptions.length === 2 && (
+          <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 space-y-3">
+            <h5 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Info className="w-4 h-4 text-amber-400" /> Ambiguous Date Format Resolution
+            </h5>
+            <p className="text-[11px] text-slate-350">
+              The date <code className="text-primary px-1.5 py-0.5 bg-white/5 rounded border border-white/5 font-mono">{row.dateStr}</code> could represent different months and days. Choose the correct interpretation:
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {dateOptions.map((opt, oIdx) => (
+                <button
+                  key={oIdx}
+                  onClick={() => {
+                    const formatted = opt.date.toISOString().split('T')[0];
+                    handleUpdateRow(index, {
+                      parsedDate: opt.date.toISOString(),
+                      dateStr: formatted,
+                    });
+                    toast.success(`Date resolved to ${opt.label} (${opt.format}).`);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/35 text-amber-400 text-xs font-bold transition duration-200 hover:cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>📅</span>
+                  <span>{opt.label} <span className="opacity-60 text-[10px]">({opt.format})</span></span>
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -1350,7 +1414,7 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ groupId, members
         const { error: joinErr } = await supabase
           .from('GroupMember')
           .insert(newMembersPayload);
-        if (joinErr) throw joinErr;
+        if (joinErr && !joinErr.message.includes('duplicate key')) throw joinErr;
       }
 
       // Refetch and update local roster so we have accurate bounds

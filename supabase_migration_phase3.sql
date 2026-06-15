@@ -43,6 +43,11 @@ CREATE TRIGGER trg_unregistered_member_updated
 -- Enable Row-Level Security
 ALTER TABLE "UnregisteredMember" ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they already exist
+DROP POLICY IF EXISTS "read_unregistered_members" ON "UnregisteredMember";
+DROP POLICY IF EXISTS "insert_unregistered_members" ON "UnregisteredMember";
+DROP POLICY IF EXISTS "update_unregistered_members" ON "UnregisteredMember";
+
 -- Allow authenticated users to read their group's unregistered members
 CREATE POLICY "read_unregistered_members" ON "UnregisteredMember"
   FOR SELECT TO authenticated
